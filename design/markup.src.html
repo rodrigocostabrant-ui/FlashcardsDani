@@ -1,0 +1,963 @@
+<div style="min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:{{deskPad}};background:#E9DFCB">
+<div style="width:100%;max-width:{{frameMax}};height:{{frameH}};border-radius:{{frameRadius}};box-shadow:{{frameShadow}};overflow:hidden;display:flex;position:relative;background-color:#F6EFE0;background-image:repeating-linear-gradient(135deg,rgba(217,140,174,.09) 0 1px,transparent 1px 11px)">
+
+<sc-if value="{{showSidebar}}" hint-placeholder-val="{{ true }}">
+<aside style="width:{{sideW}};flex:none;height:100%;display:flex;flex-direction:column;gap:28px;padding:28px 18px 22px;background:#FDFBF5;border-right:1px solid #E3D9C4;position:relative">
+  <div style="display:flex;flex-direction:column;gap:6px;padding:0 8px">
+    <sc-if value="{{sideFull}}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:flex-start;gap:6px">
+        <div style="font-family:'Fraunces',serif;font-style:italic;font-weight:400;font-size:27px;line-height:.95;letter-spacing:-.02em;color:#4A4034">Flashcards<br><span style="font-style:normal;font-size:17px;color:#A8436E;letter-spacing:0">da Dani</span></div>
+        <svg width="18" height="18" sc-camel-view-box="0 0 24 24" style="margin-top:2px;transform:rotate(12deg)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="#F4D9E3" stroke="#C9485B" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#8A7C68;text-transform:uppercase">estudar hoje · lembrar depois</div>
+    </sc-if>
+    <sc-if value="{{sideCompact}}">
+      <div style="font-family:'Fraunces',serif;font-style:italic;font-size:26px;color:#A8436E;text-align:center">D.</div>
+    </sc-if>
+  </div>
+  <nav style="display:flex;flex-direction:column;gap:4px">
+    <sc-for list="{{nav}}" as="it" hint-placeholder-count="5">
+      <button sc-camel-on-click="{{it.onClick}}" title="{{it.label}}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:none;border-radius:14px;background:{{it.bg}};cursor:pointer;text-align:left;position:relative;justify-content:{{it.justify}}" style-hover="background:#F6EFE0">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;width:20px;flex:none">{{it.n}}</span>
+        <sc-if value="{{it.full}}"><span style="font-family:'Fraunces',serif;font-size:19px;font-style:{{it.fs}};color:#4A4034">{{it.label}}</span></sc-if>
+        <span style="position:absolute;right:10px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:{{it.mark}}"></span>
+      </button>
+    </sc-for>
+  </nav>
+  <sc-if value="{{sideFull}}">
+    <button sc-camel-on-click="{{goCriar}}" style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:999px;border:1.5px dashed #D98CAE;background:transparent;color:#A8436E;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#FAEBF0">+ Novo card</button>
+  </sc-if>
+  <div style="flex:1"></div>
+  <sc-if value="{{sideFull}}">
+    <div style="position:relative;padding:16px 14px 14px;border-radius:16px;background-color:#F3E3B5;background-image:repeating-linear-gradient(to bottom,transparent 0 17px,rgba(201,72,91,.13) 17px 18px);transform:rotate(-1.2deg)">
+      <div style="position:absolute;top:-9px;left:50%;margin-left:-30px;width:60px;height:18px;background:rgba(244,217,227,.85);transform:rotate(3deg)"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#7A5F14;text-transform:uppercase">ofensiva</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+        <span style="font-family:'Fraunces',serif;font-size:34px;line-height:1;color:#4A4034">{{streak}}</span>
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:15px">dias seguidos</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7A5F14;margin-top:6px">{{answered}}/{{metaResp}} hoje</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;padding:0 8px">
+      <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68"><span style="width:6px;height:6px;border-radius:50%;background:{{storageDot}}"></span>{{storageMsg}}</div>
+    </div>
+  </sc-if>
+</aside>
+</sc-if>
+
+<main ref="{{mainRef}}" style="flex:1;min-width:0;height:100%;overflow-y:auto;overflow-x:hidden;container-type:inline-size;display:flex;flex-direction:column">
+<sc-if value="{{isMobile}}">
+  <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(246,239,224,.92);border-bottom:1px solid #E3D9C4;backdrop-filter:blur(6px)">
+    <div style="font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:#4A4034">Flashcards <span style="font-style:normal;font-size:14px;color:#A8436E">da Dani</span></div>
+    <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#F3E3B5;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A5F14">
+      <svg width="12" height="12" sc-camel-view-box="0 0 24 24"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-4 3-5 3-9 1 2 2 2 3-4z" fill="#D98CAE"></path></svg>{{streak}} dias
+    </div>
+  </div>
+</sc-if>
+<div style="width:100%;max-width:1140px;margin:0 auto;padding:clamp(18px,4.6cqi,52px);padding-bottom:56px;flex:1">
+
+<!-- INÍCIO -->
+<sc-if value="{{isInicio}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:30px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:620px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">{{todayLabel}}</div>
+      <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0;color:#4A4034">Oi, Dani. <span style="font-style:italic;color:#A8436E">Vamos estudar?</span></h1>
+      <sc-if value="{{faltam}}"><p style="margin:0;font-size:16px;line-height:1.55;color:#6E6250;text-wrap:pretty;max-width:480px">Cada revisão de hoje é um plantão mais tranquilo amanhã. Você está a <strong style="color:#4A4034">{{faltam}} {{faltamCards}}</strong> da meta.</p></sc-if>
+      <sc-if value="{{metaFeita}}"><p style="margin:0;font-size:16px;line-height:1.55;color:#6E6250;text-wrap:pretty;max-width:480px">Meta de hoje cumprida. <strong style="color:#4A4034">Tudo o que vier agora é bônus.</strong></p></sc-if>
+    </div>
+    <sc-if value="{{hasLembrete}}">
+    <div sc-camel-on-click="{{openLembrete}}" title="Editar lembrete" style="position:relative;width:196px;padding:20px 18px 16px;background:#FFF6D8;box-shadow:0 6px 14px rgba(150,130,100,.12);transform:rotate(2.2deg);border-radius:4px 4px 14px 4px;cursor:pointer">
+      <div style="position:absolute;top:-10px;left:60px;width:72px;height:20px;background:rgba(220,235,217,.9);transform:rotate(-4deg);background-image:repeating-linear-gradient(90deg,rgba(127,168,134,.25) 0 2px,transparent 2px 6px)"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#A3303F;text-transform:uppercase">lembrete ✦</div>
+      <div style="font-family:'Fraunces',serif;font-style:italic;font-size:19px;line-height:1.15;margin-top:6px">{{lembTitulo}}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;margin-top:6px">{{lembQuando}}</div>
+    </div>
+    </sc-if>
+    <sc-if value="{{noLembrete}}">
+    <button sc-camel-on-click="{{openLembrete}}" style="width:196px;padding:18px;border-radius:4px 4px 14px 4px;border:1.5px dashed #E3D9C4;background:transparent;transform:rotate(2.2deg);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left" style-hover="background:#FFF6D8">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#A3303F;text-transform:uppercase">lembrete ✦</span>
+      <span style="font-family:'Fraunces',serif;font-style:italic;font-size:17px;line-height:1.15;color:#8A7C68">+ anotar uma prova</span>
+    </button>
+    </sc-if>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:18px">
+    <div style="flex:2 1 420px;min-width:0;position:relative;overflow:hidden;padding:clamp(22px,3.6cqi,36px);border-radius:26px;background-color:#F3E3B5;background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(201,72,91,.10) 27px 28px);display:flex;flex-direction:column;gap:18px">
+      <div style="position:absolute;left:clamp(14px,2.4cqi,24px);top:0;bottom:0;width:1px;background:rgba(201,72,91,.25)"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7A5F14;padding-left:14px">para revisar hoje</div>
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;padding-left:14px">
+        <span style="font-family:'Fraunces',serif;font-weight:340;font-size:clamp(88px,15cqi,148px);line-height:.8;letter-spacing:-.05em;color:#4A4034">{{dueTotal}}</span>
+        <div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px">
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:26px;line-height:1">cards</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7A5F14">{{learnCount}} aprendendo · {{revCount}} para revisar</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding-left:14px">
+        <button sc-camel-on-click="{{startAll}}" style="display:inline-flex;align-items:center;gap:12px;height:56px;padding:0 30px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258" style-active="transform:translateY(2px);box-shadow:0 1px 0 #8C2F51">Começar estudo <span style="font-size:20px">→</span></button>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#7A5F14">{{estLabel}}</span>
+      </div>
+      <svg width="190" height="30" sc-camel-view-box="0 0 190 30" style="position:absolute;right:22px;bottom:18px;opacity:.55"><path d="M0 18 H70 L78 18 L84 4 L92 28 L98 12 L104 18 H190" fill="none" stroke="#C9485B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </div>
+
+    <div style="flex:1 1 260px;min-width:0;padding:26px;border-radius:26px;background:#FDFBF5;border:1px solid #E3D9C4;box-shadow:0 2px 8px rgba(150,130,100,.08);display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">meta de hoje</div>
+        <button sc-camel-on-click="{{goAjustes}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E;text-decoration:underline">ajustar</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <div style="position:relative;width:124px;height:124px;flex:none">
+          <svg width="124" height="124" sc-camel-view-box="0 0 124 124"><circle cx="62" cy="62" r="52" fill="none" stroke="#F4D9E3" stroke-width="12"></circle><circle cx="62" cy="62" r="52" fill="none" stroke="#D98CAE" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="{{ringOffset}}" transform="rotate(-90 62 62)" style="transition:stroke-dashoffset .6s ease"></circle></svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span style="font-family:'Fraunces',serif;font-size:34px;line-height:1">{{answered}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">de {{metaResp}}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:20px;line-height:1.1">{{metaMsg}}</span>
+          <span style="font-size:13.5px;color:#6E6250;line-height:1.4">cards respondidos</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px;border-top:1px dashed #E3D9C4">
+        <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Cards criados</span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{created}} / {{metaCriar}}</span></div>
+          <div style="height:8px;border-radius:999px;background:#EAF1E6;overflow:hidden"><div style="height:100%;width:{{createdPct}};background:#7FA886;border-radius:999px;transition:width .4s"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Novos vistos</span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{novosHoje}} / {{metaNovos}}</span></div>
+          <div style="height:8px;border-radius:999px;background:#F6EFE0;overflow:hidden"><div style="height:100%;width:{{novosPct}};background:#D9BE6B;border-radius:999px"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:18px">
+    <div style="flex:1 1 250px;min-width:0;padding:24px;border-radius:24px;background-color:#F4D9E3;background-image:radial-gradient(rgba(201,72,91,.16) 1.2px,transparent 1.7px);background-size:14px 14px;display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9C3E66">ofensiva</div>
+      <div style="display:flex;align-items:flex-end;gap:10px">
+        <svg width="30" height="36" sc-camel-view-box="0 0 24 28"><path d="M12 1c1.2 6 7 8.2 7 15a7 7 0 0 1-14 0c0-4.6 3.4-5.8 3.4-10.2 1.2 2.3 2.4 2.3 3.6-4.8z" fill="#FDFBF5" stroke="#C9485B" stroke-width="1.4"></path><path d="M12 13c.6 3 3.4 4 3.4 7a3.4 3.4 0 0 1-6.8 0c0-2 1.6-2.6 1.6-4.6.6 1 1.2 1 1.8-2.4z" fill="#D98CAE"></path></svg>
+        <span style="font-family:'Fraunces',serif;font-size:52px;line-height:.85">{{streak}}</span>
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:19px;padding-bottom:3px">dias</span>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9C3E66">recorde {{recorde}}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:12px;border-radius:16px;background:#FDFBF5">
+        <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A7C68">{{d.l}}</span>
+            <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:{{d.bg}};border:{{d.bd}};color:{{d.c}}">{{d.sym}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1.4 1 300px;min-width:0;padding:24px;border-radius:24px;background:#FDFBF5;border:1px solid #E3D9C4;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">disciplina · 30 dias</div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{m30met}} de {{m30count}} dias</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-family:'Fraunces',serif;font-size:44px;line-height:1">{{m30pct}}</span>
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:#6E6250">dos dias cumpridos</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(15,1fr);gap:5px">
+        <sc-for list="{{m30}}" as="c" hint-placeholder-count="30">
+          <div title="{{c.t}}" style="aspect-ratio:1;border-radius:5px;background:{{c.bg}};box-shadow:{{c.sh}}"></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68">
+        <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:#87BC96"></i>meta batida</span>
+        <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:#F3E3B5"></i>estudou pouco</span>
+        <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:#FDFBF5;box-shadow:inset 0 0 0 1px #E3D9C4"></i>descanso</span>
+        <span style="display:flex;align-items:center;gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:#F4D9E3"></i>não estudou</span>
+      </div>
+    </div>
+
+    <div style="flex:.8 1 200px;min-width:0;padding:24px;border-radius:24px;background-color:#E4E8D6;background-image:repeating-linear-gradient(135deg,rgba(85,100,63,.08) 0 1px,transparent 1px 8px);display:flex;flex-direction:column;align-items:flex-start;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#55643F">escudo semanal</div>
+      <svg width="58" height="64" sc-camel-view-box="0 0 40 44" style="animation:floaty 5s ease-in-out infinite"><path d="M20 2 L36 8 V21 C36 31 28 38 20 42 C12 38 4 31 4 21 V8 Z" fill="#FDFBF5" stroke="#55643F" stroke-width="1.6" stroke-linejoin="round"></path><path d="M20 8 L31 12 V21 C31 28 26 33 20 36 Z" fill="#DCEBD9"></path><path d="M20 14 l1.8 3.8 4.2.5-3.1 2.8.9 4.1-3.8-2.1-3.8 2.1.9-4.1-3.1-2.8 4.2-.5z" fill="#D98CAE"></path></svg>
+      <span style="font-family:'Fraunces',serif;font-style:italic;font-size:21px;line-height:1.1">{{escudoTitulo}}</span>
+      <span style="font-size:13px;line-height:1.45;color:#55643F">{{escudoTexto}}</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:36px;padding-top:6px">
+    <div style="flex:1.6 1 380px;min-width:0;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px">
+        <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:26px">Baralhos <span style="font-style:italic;color:#4F7358">de hoje</span></h2>
+        <button sc-camel-on-click="{{goBaralhos}}" style="border:none;background:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;text-decoration:underline">ver todos</button>
+      </div>
+      <sc-for list="{{decksDue}}" as="d" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 4px;border-top:1px solid #E3D9C4">
+          <span style="width:14px;height:18px;border-radius:3px;flex:none;background:{{d.dot}}"></span>
+          <button sc-camel-on-click="{{d.open}}" style="flex:1;min-width:0;border:none;background:none;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px">
+            <span style="font-family:'Fraunces',serif;font-size:18px">{{d.nome}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{d.due}} revisar · {{d.novos}} novos</span>
+          </button>
+          <button sc-camel-on-click="{{d.study}}" style="height:36px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:700;font-size:13px;cursor:pointer" style-hover="background:#F4D9E3;border-color:#D98CAE">Estudar</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{noDecksDue}}"><div style="padding:16px 4px;border-top:1px solid #E3D9C4;font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:#8A7C68">Tudo em dia por hoje. Que tal escrever uns cards novos?</div></sc-if>
+    </div>
+    <div style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:14px">
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:26px">Próximos <span style="font-style:italic;color:#A8436E">dias</span></h2>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:10px">
+        <sc-for list="{{next7}}" as="b" hint-placeholder-count="7">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">{{b.v}}</span>
+            <div style="width:100%;max-width:26px;height:{{b.h}};border-radius:6px 6px 3px 3px;background:{{b.c}}"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A7C68">{{b.l}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin:0;font-size:13px;color:#8A7C68;line-height:1.5">Revisões já agendadas pelo FSRS. Manter a meta hoje deixa a semana mais leve.</p>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ESTUDAR -->
+<sc-if value="{{isEstudar}}">
+<div style="display:flex;flex-direction:column;gap:30px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">02 · estudar</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Hoje você <span style="font-style:italic;color:#A8436E">consegue.</span></h1>
+  </div>
+  <div style="position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between;padding:clamp(22px,4cqi,40px);border-radius:28px;background-color:#F4D9E3;background-image:repeating-linear-gradient(135deg,rgba(201,72,91,.10) 0 1px,transparent 1px 9px)">
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9C3E66">sessão completa · todos os baralhos</div>
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Fraunces',serif;font-size:clamp(64px,10cqi,96px);line-height:.85;letter-spacing:-.04em">{{dueTotal}}</span><span style="font-family:'Fraunces',serif;font-style:italic;font-size:22px">cards esperando</span></div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#9C3E66">aprendendo primeiro · revisões · novos espalhados no meio</span>
+    </div>
+    <button sc-camel-on-click="{{startAll}}" style="display:inline-flex;align-items:center;gap:12px;height:58px;padding:0 32px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258" style-active="transform:translateY(2px)">Estudar tudo →</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <h2 style="margin:0 0 12px;font-family:'Fraunces',serif;font-weight:400;font-size:26px">Ou escolha <span style="font-style:italic;color:#4F7358">um baralho</span></h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
+      <sc-for list="{{decksDue}}" as="d" hint-placeholder-count="5">
+        <button sc-camel-on-click="{{d.study}}" style="display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:20px;border:1px solid #E3D9C4;background:#FDFBF5;text-align:left;cursor:pointer;transition:transform .15s" style-hover="transform:translateY(-2px);border-color:#D98CAE">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%"><span style="width:34px;height:10px;border-radius:999px;background:{{d.dot}}"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{d.ultimo}}</span></div>
+          <span style="font-family:'Fraunces',serif;font-size:22px;line-height:1.1">{{d.nome}}</span>
+          <div style="display:flex;gap:14px;font-family:'IBM Plex Mono',monospace;font-size:12px"><span style="color:#A8436E">{{d.due}} revisar</span><span style="color:#4F7358">{{d.novos}} novos</span></div>
+        </button>
+      </sc-for>
+    </div>
+    <sc-if value="{{noDecksDue}}">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:24px;border-radius:22px;background-color:#DCEBD9;background-image:radial-gradient(rgba(62,107,74,.14) 1.2px,transparent 1.7px);background-size:14px 14px">
+        <span style="font-size:26px;color:#4F7358">✓</span>
+        <span style="font-family:'Fraunces',serif;font-size:22px;line-height:1.15">Tudo em dia <span style="font-style:italic">por hoje.</span></span>
+        <span style="font-size:13.5px;color:#3E6B4A;line-height:1.45">Nenhum card vence até amanhã. Que tal escrever alguns cards novos?</span>
+      </div>
+    </sc-if>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:18px 22px;border-radius:18px;border:1px dashed #E3D9C4">
+    <span style="font-family:'Fraunces',serif;font-style:italic;font-size:17px">Atalhos</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px"><kbd style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:6px;background:#FDFBF5;border:1px solid #E3D9C4;border-bottom-width:2px">espaço</kbd>mostrar resposta</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px"><kbd style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:6px;background:#FDFBF5;border:1px solid #E3D9C4;border-bottom-width:2px">1 2 3 4</kbd>Errei · Difícil · Bom · Fácil</span>
+    <span style="flex:1 1 240px;font-size:13px;color:#8A7C68;line-height:1.5">Intervalos calculados pelo FSRS, o mesmo algoritmo moderno do Anki. Avalie com sinceridade — é isso que faz ele acertar.</span>
+  </div>
+</div>
+</sc-if>
+
+<!-- SESSÃO -->
+<sc-if value="{{isSessao}}">
+<div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:center;gap:14px">
+    <button sc-camel-on-click="{{exitSession}}" style="height:38px;padding:0 14px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F4D9E3">← Sair</button>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <span style="font-family:'Fraunces',serif;font-style:italic;font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">{{sessName}}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A7C68">card {{sPos}} de {{sTotal}}</span>
+    </div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;min-width:70px;text-align:right">meta {{answered}}/{{metaResp}}</span>
+  </div>
+  <div style="height:6px;border-radius:999px;background:#F4D9E3;overflow:hidden"><div style="height:100%;width:{{sProgW}};background:#D98CAE;border-radius:999px;transition:width .4s ease"></div></div>
+
+  <div style="position:relative;min-height:min(420px,62cqi);padding:clamp(26px,5cqi,48px) clamp(20px,5cqi,52px);border-radius:24px;background:#FDFBF5;border:1.5px solid {{sBorder}};box-shadow:0 2px 8px rgba(150,130,100,.08), 0 18px 40px -24px rgba(150,130,100,.35);display:flex;flex-direction:column;gap:22px;transition:border-color .2s, transform .25s;transform:{{sCardT}}">
+    <div style="position:absolute;top:-11px;left:50%;margin-left:-44px;width:88px;height:22px;background:rgba(243,227,181,.9);transform:rotate(-2deg);background-image:repeating-linear-gradient(90deg,rgba(201,72,91,.14) 0 2px,transparent 2px 7px)"></div>
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;padding:4px 10px;border-radius:999px;background:{{sCard.deckBg}};color:{{sCard.deckInk}}">{{sCard.deck}}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">{{sCard.kind}}</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;text-align:center">
+      <p style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(24px,4.2cqi,34px);line-height:1.25;letter-spacing:-.01em;text-wrap:balance">{{sCard.q}}</p>
+      <sc-if value="{{revealed}}">
+        <div style="display:flex;flex-direction:column;gap:16px;animation:fadeUp .3s ease both">
+          <div style="display:flex;align-items:center;gap:10px"><span style="flex:1;border-top:1.5px dashed #E3D9C4"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A8436E">RESPOSTA</span><span style="flex:1;border-top:1.5px dashed #E3D9C4"></span></div>
+          <p style="margin:0;font-size:clamp(17px,2.8cqi,21px);line-height:1.55;text-wrap:pretty"><span style="background:linear-gradient(transparent 58%,rgba(243,227,181,.9) 58%);padding:0 2px">{{sCard.a}}</span></p>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{hasStamp}}">
+      <div style="position:absolute;right:22px;bottom:20px;padding:6px 14px;border:2px solid {{stampC}};border-radius:10px;color:{{stampC}};font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;animation:stampIn .35s ease both;background:rgba(253,251,245,.9)">{{stampT}}</div>
+    </sc-if>
+    <sc-if value="{{isFacilFb}}">
+      <div style="position:absolute;right:60px;bottom:60px;pointer-events:none">
+        <span style="position:absolute;color:#D9BE6B;font-size:18px;--dx:-40px;--dy:-50px;animation:sparkle .8s ease-out both">✦</span>
+        <span style="position:absolute;color:#D98CAE;font-size:14px;--dx:30px;--dy:-60px;animation:sparkle .8s .05s ease-out both">✦</span>
+        <span style="position:absolute;color:#7FA886;font-size:12px;--dx:50px;--dy:-20px;animation:sparkle .8s .1s ease-out both">✦</span>
+        <span style="position:absolute;color:#C9485B;font-size:10px;--dx:-60px;--dy:-10px;animation:sparkle .8s .08s ease-out both">♥</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{notRevealed}}">
+    <button sc-camel-on-click="{{reveal}}" style="height:64px;border-radius:20px;border:none;background:#4A4034;color:#FDFBF5;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px" style-hover="background:#3A3229" style-active="transform:translateY(1px)">Mostrar resposta <kbd style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;padding:3px 8px;border-radius:6px;background:rgba(253,251,245,.14)">espaço</kbd></button>
+  </sc-if>
+  <sc-if value="{{revealed}}">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(6px,1.6cqi,12px);animation:fadeUp .25s ease both">
+      <button sc-camel-on-click="{{rate1}}" style="min-height:76px;padding:12px 6px;border-radius:18px;border:1.5px solid #E7A9BD;background:#F7DCE3;color:#9C2F4F;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px" style-hover="background:#F2CCD7" style-active="transform:scale(.97)">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:clamp(17px,3cqi,21px)">Errei</span>
+        <sc-if value="{{showIntervals}}"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{ivl1}}</span></sc-if>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.6">1</span>
+      </button>
+      <button sc-camel-on-click="{{rate2}}" style="min-height:76px;padding:12px 6px;border-radius:18px;border:1.5px solid #E3CB85;background:#F6EACB;color:#6F5510;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px" style-hover="background:#F1E0B1" style-active="transform:scale(.97)">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:clamp(17px,3cqi,21px)">Difícil</span>
+        <sc-if value="{{showIntervals}}"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{ivl2}}</span></sc-if>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.6">2</span>
+      </button>
+      <button sc-camel-on-click="{{rate3}}" style="min-height:76px;padding:12px 6px;border-radius:18px;border:1.5px solid #A9CBAE;background:#DCEBD9;color:#335C3E;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px" style-hover="background:#CDE2C9" style-active="transform:scale(.97)">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:clamp(17px,3cqi,21px)">Bom</span>
+        <sc-if value="{{showIntervals}}"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{ivl3}}</span></sc-if>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.6">3</span>
+      </button>
+      <button sc-camel-on-click="{{rate4}}" style="min-height:76px;padding:12px 6px;border-radius:18px;border:1.5px solid #A9C1D2;background:#DCE7EE;color:#355A73;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px" style-hover="background:#CCDDE7" style-active="transform:scale(.97)">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:clamp(17px,3cqi,21px)">Fácil</span>
+        <sc-if value="{{showIntervals}}"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{ivl4}}</span></sc-if>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.6">4</span>
+      </button>
+    </div>
+    <p style="margin:0;text-align:center;font-size:12.5px;color:#8A7C68">O tempo abaixo de cada botão é quando este card volta. <strong style="color:#6E6250">Errei</strong> traz ele de volta ainda nesta sessão.</p>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- RESULTADO -->
+<sc-if value="{{isResultado}}">
+<div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px;animation:fadeUp .4s ease both">
+  <div style="position:relative;padding:clamp(28px,5cqi,48px);border-radius:28px;background-color:#FDFBF5;background-image:radial-gradient(rgba(217,140,174,.2) 1.2px,transparent 1.7px);background-size:16px 16px;border:1px solid #E3D9C4;display:flex;flex-direction:column;gap:16px;align-items:flex-start;overflow:hidden">
+    <span style="position:absolute;right:34px;top:26px;font-size:28px;color:#D9BE6B;animation:pop .6s .2s ease both">✦</span>
+    <span style="position:absolute;right:74px;top:62px;font-size:16px;color:#D98CAE;animation:pop .6s .35s ease both">✦</span>
+    <span style="position:absolute;right:28px;top:88px;font-size:14px;color:#C9485B;animation:pop .6s .5s ease both">♥</span>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">{{sessName}} · sessão concluída</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(38px,7cqi,62px);line-height:1;letter-spacing:-.025em;margin:0">Seu cérebro está <span style="font-style:italic;color:#A8436E">trabalhando.</span></h1>
+    <p style="margin:0;font-size:16px;color:#6E6250;line-height:1.5">{{resMsg}}</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0;border-top:1px solid #E3D9C4;border-bottom:1px solid #E3D9C4">
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:6px;border-right:1px solid #E3D9C4"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8A7C68">respondidos</span><span style="font-family:'Fraunces',serif;font-size:40px;line-height:1">{{resTotal}}</span></div>
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:6px;border-right:1px solid #E3D9C4"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8A7C68">retenção</span><span style="font-family:'Fraunces',serif;font-size:40px;line-height:1">{{resRet}}</span></div>
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:6px;border-right:1px solid #E3D9C4"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8A7C68">tempo</span><span style="font-family:'Fraunces',serif;font-size:40px;line-height:1">{{resTime}}</span></div>
+    <div style="padding:20px 18px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8A7C68">meta de hoje</span><span style="font-family:'Fraunces',serif;font-size:40px;line-height:1">{{answered}}<span style="font-size:20px;color:#8A7C68">/{{metaResp}}</span></span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">como você avaliou</div>
+    <div style="display:flex;gap:2px;height:18px;border-radius:999px;overflow:hidden">
+      <sc-for list="{{resDist}}" as="r" hint-placeholder-count="4"><div style="flex:{{r.n}};background:{{r.c}}"></div></sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:18px">
+      <sc-for list="{{resDist}}" as="r" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:6px;font-size:13.5px"><i style="width:10px;height:10px;border-radius:3px;background:{{r.c}}"></i>{{r.l}} <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A7C68">{{r.n}}</span></span></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:18px;background:#E4E8D6">
+    <span style="font-family:'Fraunces',serif;font-style:italic;font-size:18px">Próxima revisão</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#55643F">{{nextRevLabel}}</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:12px">
+    <button sc-camel-on-click="{{goEstudar}}" style="height:50px;padding:0 26px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Estudar outro baralho</button>
+    <button sc-camel-on-click="{{goInicio}}" style="height:50px;padding:0 24px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:15px;cursor:pointer" style-hover="background:#F6EFE0">Voltar ao início</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- BARALHOS -->
+<sc-if value="{{isBaralhos}}">
+<div style="display:flex;flex-direction:column;gap:28px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">03 · baralhos · {{deckCount}} baralhos · {{cardCount}} cards</div>
+      <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Suas <span style="font-style:italic;color:#4F7358">fichas.</span></h1>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#DCEBD9">Importar PDF</button>
+      <button sc-camel-on-click="{{openNovoBaralho}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">+ Novo baralho</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px 18px">
+    <sc-for list="{{decksV}}" as="d" hint-placeholder-count="6">
+      <button sc-camel-on-click="{{d.open}}" style="position:relative;display:flex;flex-direction:column;padding:0;border-radius:20px;border:1px solid #E3D9C4;background:#FDFBF5;text-align:left;cursor:pointer;overflow:visible;box-shadow:0 2px 8px rgba(150,130,100,.08);transition:transform .18s, box-shadow .18s" style-hover="transform:translateY(-3px) rotate(-.4deg);box-shadow:0 12px 24px -10px rgba(150,130,100,.35)">
+        <div style="position:absolute;top:-9px;right:26px;width:54px;height:18px;background:rgba(253,251,245,.75);transform:rotate(5deg);box-shadow:0 1px 2px rgba(150,130,100,.2)"></div>
+        <div style="height:92px;border-radius:19px 19px 0 0;background-color:{{d.bg}};background-image:{{d.pat}};background-size:{{d.ps}};padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:{{d.ink}};text-transform:uppercase">{{d.totalFmt}} cards</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{d.ink}}">{{d.prog}}%</span>
+        </div>
+        <div style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;width:100%">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:'Fraunces',serif;font-size:23px;line-height:1.1">{{d.nome}}</span>
+            <span style="font-size:13px;color:#8A7C68">{{d.sub}}</span>
+          </div>
+          <div style="height:6px;border-radius:999px;background:#F6EFE0;overflow:hidden"><div style="height:100%;width:{{d.progW}};background:{{d.dot}};border-radius:999px"></div></div>
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px">
+            <span><span style="color:#A8436E">{{d.due}}</span> revisar · <span style="color:#4F7358">{{d.novos}}</span> novos</span>
+            <span style="color:#8A7C68">{{d.ultimo}}</span>
+          </div>
+        </div>
+      </button>
+    </sc-for>
+    <button sc-camel-on-click="{{openNovoBaralho}}" style="min-height:230px;border-radius:20px;border:1.5px dashed #A9CBAE;background-color:transparent;background-image:radial-gradient(rgba(127,168,134,.22) 1.2px,transparent 1.7px);background-size:14px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:#4F7358" style-hover="background-color:#EAF1E6">
+      <span style="font-family:'Fraunces',serif;font-size:40px;line-height:1">+</span>
+      <span style="font-family:'Fraunces',serif;font-style:italic;font-size:19px">Novo baralho</span>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<!-- DETALHE DO BARALHO -->
+<sc-if value="{{isBaralho}}">
+<div style="display:flex;flex-direction:column;gap:26px;animation:fadeUp .35s ease both">
+  <button sc-camel-on-click="{{goBaralhos}}" style="align-self:flex-start;border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.06em;color:#8A7C68" style-hover="color:#4A4034">← baralhos</button>
+  <div style="position:relative;padding:clamp(22px,4cqi,36px);border-radius:26px;background-color:{{dk.bg}};background-image:{{dk.pat}};background-size:{{dk.ps}};display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:{{dk.ink}}">{{dk.sub}}</span>
+      <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,58px);line-height:1;letter-spacing:-.025em;margin:0">{{dk.nome}}</h1>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:{{dk.ink}}">último estudo: {{dk.ultimo}}</span>
+      <div style="display:flex;gap:14px;margin-top:4px">
+        <button sc-camel-on-click="{{editDeck}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{dk.ink}};text-decoration:underline">editar</button>
+        <button sc-camel-on-click="{{archiveDeck}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{dk.ink}};text-decoration:underline">arquivar</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(74,64,52,.18);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#FDFBF5">Importar PDF</button>
+      <button sc-camel-on-click="{{goCriar}}" style="height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(74,64,52,.18);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#FDFBF5">+ Novo card</button>
+      <sc-if value="{{dk.hasDue}}"><button sc-camel-on-click="{{dk.study}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Estudar agora →</button></sc-if>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border-top:1px solid #E3D9C4;border-bottom:1px solid #E3D9C4">
+    <div style="padding:16px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">TOTAL</span><span style="font-family:'Fraunces',serif;font-size:34px">{{dk.totalFmt}}</span></div>
+    <div style="padding:16px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">PARA REVISAR</span><span style="font-family:'Fraunces',serif;font-size:34px;color:#A8436E">{{dk.due}}</span></div>
+    <div style="padding:16px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">NOVOS</span><span style="font-family:'Fraunces',serif;font-size:34px;color:#4F7358">{{dk.novos}}</span></div>
+    <div style="padding:16px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">DOMINADOS</span><span style="font-family:'Fraunces',serif;font-size:34px">{{dk.prog}}%</span></div>
+  </div>
+  <sc-if value="{{dk.empty}}">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:56px 24px;border-radius:26px;border:1.5px dashed #E3D9C4;background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(127,160,184,.14) 27px 28px)">
+      <div style="width:84px;height:60px;border-radius:8px;background:#FDFBF5;border:1px solid #E3D9C4;transform:rotate(-6deg);box-shadow:8px 8px 0 -1px #FAEBF0, 8px 8px 0 0 #E3D9C4"></div>
+      <h3 style="margin:10px 0 0;font-family:'Fraunces',serif;font-weight:400;font-size:26px">Este baralho ainda está <span style="font-style:italic;color:#A8436E">em branco.</span></h3>
+      <p style="margin:0;max-width:380px;font-size:14.5px;line-height:1.5;color:#6E6250">Escreva o primeiro card à mão ou traga um resumo em PDF — você revisa tudo antes de salvar.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px">
+        <button sc-camel-on-click="{{goCriar}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer">Escrever um card</button>
+        <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer">Importar PDF</button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{dk.notEmpty}}">
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:12px">
+        <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:24px">Cards</h2>
+        <input value="{{search}}" sc-camel-on-change="{{onSearch}}" placeholder="Buscar pergunta ou resposta…" style="flex:0 1 300px;min-width:0;height:42px;padding:0 18px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-size:14px;outline:none">
+      </div>
+      <sc-for list="{{dkCards}}" as="c" hint-placeholder-count="5">
+        <div sc-camel-on-click="{{c.edit}}" title="Editar card" style="display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;padding:14px 4px;border-top:1px solid #E3D9C4;cursor:pointer;border-radius:4px" style-hover="background:rgba(253,251,245,.7)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;width:26px">{{c.n}}</span>
+          <span style="flex:1 1 260px;min-width:0;font-family:'Fraunces',serif;font-size:17px;line-height:1.3">{{c.q}}</span>
+          <span style="flex:1.2 1 260px;min-width:0;font-size:14px;color:#6E6250;line-height:1.45">{{c.a}}</span>
+          <span style="display:flex;gap:8px;align-items:center;margin-left:auto">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;padding:3px 9px;border-radius:999px;background:{{c.tb}};color:{{c.tc}}">{{c.state}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;min-width:72px;text-align:right">{{c.next}}</span>
+          </span>
+        </div>
+      </sc-for>
+      <sc-if value="{{dkNoResults}}"><div style="padding:30px 4px;border-top:1px solid #E3D9C4;font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:#8A7C68">Nenhum card com “{{search}}”.</div></sc-if>
+      <p style="margin:12px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">mostrando {{dkShown}} de {{dk.totalFmt}}</p>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- CRIAR CARD -->
+<sc-if value="{{isCriar}}">
+<div style="display:flex;flex-direction:column;gap:28px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">{{ccHeader}}</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">{{ccTitleA}} <span style="font-style:italic;color:#A8436E">ficha.</span></h1>
+    <sc-if value="{{cc.fromLeech}}"><p style="margin:0;font-size:14.5px;color:#6E6250">Reescrevendo um card difícil. Dica: divida em perguntas menores.</p></sc-if>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <div style="flex:1.5 1 420px;min-width:0;position:relative;border-radius:10px 10px 22px 22px;background:#FDFBF5;border:1px solid #E3D9C4;box-shadow:0 2px 8px rgba(150,130,100,.08), 0 24px 40px -28px rgba(150,130,100,.5)">
+      <div style="position:absolute;top:-11px;left:36px;width:96px;height:22px;background:rgba(244,217,227,.9);transform:rotate(-3deg);background-image:radial-gradient(rgba(201,72,91,.2) 1px,transparent 1.5px);background-size:7px 7px"></div>
+      <div style="position:absolute;top:0;bottom:0;left:clamp(34px,6cqi,56px);width:1.5px;background:rgba(201,72,91,.35)"></div>
+      <div style="padding:30px clamp(18px,4cqi,34px) 26px clamp(46px,8.5cqi,76px);display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A8436E">PERGUNTA · FRENTE</label>
+          <textarea value="{{cc.q}}" sc-camel-on-change="{{onCcQ}}" rows="3" placeholder="Ex.: Qual o antídoto da intoxicação por heparina?" style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-family:'Fraunces',serif;font-size:22px;padding:0;min-height:102px"></textarea>
+          <sc-if value="{{ccErrQ}}"><span style="font-size:12.5px;color:#A3303F">Escreva a pergunta antes de salvar.</span></sc-if>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#4F7358">RESPOSTA · VERSO</label>
+          <textarea value="{{cc.a}}" sc-camel-on-change="{{onCcA}}" rows="4" placeholder="Ex.: Sulfato de protamina." style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-size:17px;padding:0;min-height:136px"></textarea>
+          <sc-if value="{{ccErrA}}"><span style="font-size:12.5px;color:#A3303F">Falta a resposta.</span></sc-if>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;padding-top:6px;border-top:1px dashed #E3D9C4">
+          <div style="flex:1 1 200px;display:flex;flex-direction:column;gap:6px;padding-top:12px">
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#8A7C68">BARALHO</label>
+            <sc-raw-select value="{{cc.deck}}" sc-camel-on-change="{{onCcDeck}}" style="height:44px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:#F6EFE0;font-size:14px;font-weight:600;outline:none;cursor:pointer">
+              <sc-for list="{{decksV}}" as="d"><option value="{{d.id}}">{{d.nome}}</option></sc-for>
+            </sc-raw-select>
+          </div>
+          <div style="flex:1.4 1 240px;display:flex;flex-direction:column;gap:6px;padding-top:12px">
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#8A7C68">TAGS · OPCIONAL</label>
+            <div style="min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px 6px 12px;border-radius:22px;border:1px solid #E3D9C4;background:#F6EFE0">
+              <sc-for list="{{ccTags}}" as="t"><button sc-camel-on-click="{{t.rm}}" style="height:28px;padding:0 10px;border-radius:999px;border:none;background:#F3E3B5;font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer" style-hover="background:#F4D9E3">#{{t.t}} ×</button></sc-for>
+              <input value="{{cc.tagIn}}" sc-camel-on-change="{{onTagIn}}" sc-camel-on-key-down="{{onTagKey}}" placeholder="enter p/ adicionar" style="flex:1;min-width:110px;height:30px;border:none;outline:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:12px">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">assim vai aparecer no estudo</div>
+      <div style="padding:22px;border-radius:18px;background:#FDFBF5;border:1px solid #E3D9C4;display:flex;flex-direction:column;gap:12px;text-align:center">
+        <span style="font-family:'Fraunces',serif;font-size:18px;line-height:1.3;color:{{ccPrevQc}}">{{ccPrevQ}}</span>
+        <span style="border-top:1.5px dashed #E3D9C4"></span>
+        <span style="font-size:14px;line-height:1.5;color:{{ccPrevAc}}">{{ccPrevA}}</span>
+      </div>
+      <ul style="margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.45;color:#6E6250">
+        <li>Uma ideia por card.</li>
+        <li>Pergunte de um jeito que só exista uma resposta certa.</li>
+        <li>Resposta curta lembra melhor que parágrafo.</li>
+      </ul>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button sc-camel-on-click="{{saveCard}}" style="height:52px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258" style-active="transform:translateY(2px)">{{ccSaveL}}</button>
+        <button sc-camel-on-click="{{saveCardAgain}}" style="height:46px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer;color:{{ccSave2C}}" style-hover="background:#F6EFE0">{{ccSave2L}}</button>
+        <sc-if value="{{ccEditing}}"><button sc-camel-on-click="{{toggleSuspend}}" style="align-self:center;border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;text-decoration:underline">{{ccSuspL}}</button></sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- IMPORTAR -->
+<sc-if value="{{isImportar}}">
+<div style="display:flex;flex-direction:column;gap:28px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">importar pdf</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Do resumo para <span style="font-style:italic;color:#4F7358">os cards.</span></h1>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <sc-for list="{{impSteps}}" as="st" hint-placeholder-count="3">
+      <div style="flex:1 1 150px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:{{st.bg}};border:1px solid {{st.bd}}">
+        <span style="width:28px;height:28px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;background:{{st.cb}};color:{{st.cc}}">{{st.sym}}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;color:{{st.tc}}">{{st.l}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{imp1}}">
+    <div sc-camel-on-drag-over="{{onDragOver}}" sc-camel-on-drag-leave="{{onDragLeave}}" sc-camel-on-drop="{{onDrop}}" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;padding:clamp(36px,7cqi,64px) 24px;border-radius:28px;border:2px dashed {{dropBd}};background-color:{{dropBg}};background-image:repeating-linear-gradient(135deg,rgba(217,140,174,.10) 0 1px,transparent 1px 10px);transition:background-color .2s">
+      <div style="position:relative;width:92px;height:116px;margin-bottom:6px;transform:rotate(-4deg)">
+        <div style="position:absolute;inset:0;border-radius:6px;background:#FDFBF5;border:1px solid #E3D9C4;box-shadow:6px 6px 0 -1px #F3E3B5;clip-path:polygon(0 0,72% 0,100% 22%,100% 100%,0 100%)"></div>
+        <div style="position:absolute;right:0;top:0;width:26px;height:26px;background:#E3D9C4;clip-path:polygon(0 0,100% 100%,0 100%);border-radius:0 0 0 4px"></div>
+        <div style="position:absolute;left:14px;right:18px;top:40px;display:flex;flex-direction:column;gap:7px"><i style="height:3px;background:#E3D9C4;border-radius:2px"></i><i style="height:3px;background:#E3D9C4;border-radius:2px;width:80%"></i><i style="height:3px;background:#F3E3B5;border-radius:2px"></i><i style="height:3px;background:#E3D9C4;border-radius:2px;width:60%"></i></div>
+        <span style="position:absolute;left:-10px;bottom:14px;padding:3px 8px;border-radius:5px;background:#C9485B;color:#FFF;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em">PDF</span>
+      </div>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(26px,4.4cqi,36px)">Arraste seu PDF <span style="font-style:italic;color:#A8436E">aqui</span></h2>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">ou</span>
+      <button sc-camel-on-click="{{startImport}}" style="height:50px;padding:0 26px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Escolher arquivo</button>
+      <span style="font-size:13px;color:#8A7C68;max-width:380px;line-height:1.5">PDFs com texto selecionável. O arquivo é lido aqui mesmo, no seu dispositivo — nada é enviado.</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:28px">
+      <div style="flex:2 1 380px;display:flex;flex-direction:column;gap:10px">
+        <h3 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:21px">Como a gente acha as <span style="font-style:italic">perguntas</span></h3>
+        <ol style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 22px">
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">01</span>Prefixos como P: / R:</li>
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">02</span>Tabelas em duas colunas</li>
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">03</span>termo — definição</li>
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">04</span>Listas numeradas</li>
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">05</span>Linhas alternadas</li>
+          <li style="display:flex;gap:10px;font-size:13.5px;line-height:1.4"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E">06</span>Blocos separados por linha em branco</li>
+        </ol>
+      </div>
+      <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:18px;background:#E4E8D6">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:18px">Nada entra sem você ver.</span>
+        <span style="font-size:13px;color:#55643F;line-height:1.45">Você revisa, edita e escolhe cada card antes de adicionar.</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{imp2}}">
+    <div style="display:flex;flex-direction:column;gap:26px;padding:clamp(24px,5cqi,48px);border-radius:28px;background:#FDFBF5;border:1px solid #E3D9C4">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="padding:6px 10px;border-radius:6px;background:#C9485B;color:#FFF;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em">PDF</span>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{impFileName}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{impFileMeta}}</span></div>
+        <button sc-camel-on-click="{{cancelImport}}" style="height:38px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F6EFE0">Cancelar</button>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:clamp(26px,4.6cqi,38px);line-height:1.1">{{impMsg}}</span>
+        <span style="font-family:'Fraunces',serif;font-size:32px;color:#D98CAE;animation:dot 1.2s infinite">.</span><span style="font-family:'Fraunces',serif;font-size:32px;color:#D98CAE;animation:dot 1.2s .2s infinite">.</span><span style="font-family:'Fraunces',serif;font-size:32px;color:#D98CAE;animation:dot 1.2s .4s infinite">.</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="height:12px;border-radius:999px;background:#F6EFE0;overflow:hidden;box-shadow:inset 0 0 0 1px #E3D9C4"><div style="height:100%;width:{{impProgW}};border-radius:999px;background-color:#D98CAE;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.35) 0 6px,transparent 6px 12px);transition:width .15s linear"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68"><span>página {{impPage}} de {{impPages}}</span><span>{{impProgW}}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{impChecks}}" as="c" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:{{c.col}}">
+            <span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;background:{{c.bg}};border:{{c.bd}};color:#FFF">{{c.sym}}</span>{{c.l}}
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{impErr}}">
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(24px,5cqi,44px);border-radius:28px;background-color:#F6D8D8;background-image:radial-gradient(rgba(163,48,63,.14) 1.2px,transparent 1.7px);background-size:14px 14px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A3303F">{{impErrTag}}</span>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(26px,4.6cqi,36px)">{{impErrTitle}} <span style="font-style:italic;color:#A3303F">{{impErrTitleEm}}</span></h2>
+      <p style="margin:0;max-width:520px;font-size:15px;line-height:1.55;color:#6E3A40">{{impErrText}}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">
+        <button sc-camel-on-click="{{restartImport}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#A3303F;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#8C2635">Tentar outro arquivo</button>
+        <button sc-camel-on-click="{{goCriar}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(163,48,63,.3);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer">Escrever à mão</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{imp3}}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'Fraunces',serif;font-size:clamp(30px,5cqi,42px);line-height:1"><span style="font-style:italic;color:#A8436E">{{impN}}</span> cards encontrados</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A7C68">{{impFileName}} · confiança {{impConf}}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:4px"><label style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#8A7C68">ESTRATÉGIA</label>
+            <sc-raw-select value="{{imp.strat}}" sc-camel-on-change="{{onStrat}}" style="height:42px;max-width:280px;padding:0 14px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-size:13.5px;outline:none;cursor:pointer"><sc-for list="{{strats}}" as="o"><option value="{{o.id}}">{{o.lab}}</option></sc-for></sc-raw-select></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><label style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#8A7C68">BARALHO</label>
+            <sc-raw-select value="{{imp.deck}}" sc-camel-on-change="{{onImpDeck}}" style="height:42px;padding:0 14px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-size:13.5px;font-weight:600;outline:none;cursor:pointer"><sc-for list="{{decksV}}" as="d"><option value="{{d.id}}">{{d.nome}}</option></sc-for></sc-raw-select></div>
+        </div>
+      </div>
+      <sc-if value="{{impLow}}">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 18px;border-radius:16px;background:#F6EACB;font-size:14px;line-height:1.5;color:#6F5510"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding-top:2px">!</span>{{impLowMsg}}</div>
+      </sc-if>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13.5px;color:#6E6250">
+        <button sc-camel-on-click="{{toggleAll}}" style="border:none;background:none;padding:0;cursor:pointer;font-weight:700;color:#A8436E;text-decoration:underline">{{toggleAllL}}</button>
+        <span>{{impDupMsg}}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{impItems}}" as="it" hint-placeholder-count="6">
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:18px;background:#FDFBF5;border:1px solid {{it.bd}};opacity:{{it.op}};transition:opacity .2s">
+            <button sc-camel-on-click="{{it.toggle}}" title="Incluir" style="width:26px;height:26px;flex:none;border-radius:8px;border:1.5px solid {{it.cbBd}};background:{{it.cbBg}};color:#FFF;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">{{it.cbSym}}</button>
+            <div style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:10px 22px">
+              <div style="flex:1 1 180px;min-width:0;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#A8436E">{{it.num}} · PERGUNTA</span>
+                <sc-if value="{{it.edit}}"><textarea value="{{it.q}}" sc-camel-on-change="{{it.onQ}}" rows="2" style="width:100%;resize:vertical;padding:8px 10px;border-radius:10px;border:1px solid #D98CAE;background:#FFF;font-family:'Fraunces',serif;font-size:16px;outline:none"></textarea></sc-if>
+                <sc-if value="{{it.view}}"><span style="font-family:'Fraunces',serif;font-size:17px;line-height:1.3">{{it.q}}</span></sc-if>
+              </div>
+              <div style="flex:2 1 240px;min-width:0;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#4F7358">RESPOSTA</span>
+                <sc-if value="{{it.edit}}"><textarea value="{{it.a}}" sc-camel-on-change="{{it.onA}}" rows="2" style="width:100%;resize:vertical;padding:8px 10px;border-radius:10px;border:1px solid #A9CBAE;background:#FFF;font-size:14.5px;outline:none"></textarea></sc-if>
+                <sc-if value="{{it.view}}"><span style="font-size:14.5px;line-height:1.45;color:#6E6250">{{it.a}}</span></sc-if>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none">
+              <sc-if value="{{it.dup}}"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;padding:3px 8px;border-radius:999px;background:#F4D9E3;color:#9C3E66">JÁ EXISTE</span></sc-if>
+              <div style="display:flex;gap:4px">
+                <button sc-camel-on-click="{{it.onEdit}}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#F6EFE0">{{it.editL}}</button>
+                <button sc-camel-on-click="{{it.onDel}}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid transparent;background:transparent;font-size:12.5px;font-weight:600;color:#A3303F;cursor:pointer" style-hover="background:#F6D8D8">Excluir</button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:sticky;bottom:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 12px 12px 22px;border-radius:999px;background:#4A4034;color:#FDFBF5;box-shadow:0 12px 30px -10px rgba(74,64,52,.5)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{impSel}} de {{impN}} selecionados → {{impDeckName}}</span>
+        <button sc-camel-on-click="{{addImport}}" style="height:46px;padding:0 24px;border-radius:999px;border:none;background:#F4D9E3;color:#4A4034;font-weight:700;font-size:14.5px;cursor:pointer" style-hover="background:#FAEBF0">Adicionar ao baralho</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{imp4}}">
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(28px,5cqi,48px);border-radius:28px;background-color:#DCEBD9;background-image:radial-gradient(rgba(62,107,74,.14) 1.2px,transparent 1.7px);background-size:14px 14px;position:relative;overflow:hidden">
+      <div style="width:64px;height:64px;border-radius:50%;background:#FDFBF5;border:2px solid #4F7358;display:flex;align-items:center;justify-content:center;font-size:28px;color:#4F7358;animation:pop .5s ease both">✓</div>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(28px,5cqi,40px)">{{impAdded}} cards <span style="font-style:italic;color:#3E6B4A">no lugar certo.</span></h2>
+      <p style="margin:0;font-size:15px;color:#3E6B4A">Eles entram como novos em {{impDeckName}} e aparecem aos poucos nas próximas sessões.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+        <button sc-camel-on-click="{{goImpDeck}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer">Ver baralho</button>
+        <button sc-camel-on-click="{{restartImport}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(62,107,74,.3);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer">Importar outro PDF</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- EVOLUÇÃO -->
+<sc-if value="{{isEvolucao}}">
+<div style="display:flex;flex-direction:column;gap:34px;animation:fadeUp .35s ease both">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">04 · evolução · {{mesAtual}}</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">O que você <span style="font-style:italic;color:#55643F">já construiu.</span></h1>
+    <p style="margin:0;font-size:15.5px;color:#6E6250">{{evoResumo}}</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0;border-top:1.5px solid #4A4034">
+    <div style="padding:18px 18px 18px 0;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#8A7C68">OFENSIVA</span><span style="font-family:'Fraunces',serif;font-size:46px;line-height:1">{{streak}}<span style="font-size:18px;font-style:italic"> dias</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">recorde {{recorde}}</span></div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:6px;border-left:1px solid #E3D9C4"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#8A7C68">DISCIPLINA 30D</span><span style="font-family:'Fraunces',serif;font-size:46px;line-height:1">{{m30pct}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{m30met}} de {{m30count}} dias</span></div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:6px;border-left:1px solid #E3D9C4;background:#F3E3B5;border-radius:0 0 18px 18px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#7A5F14">RETENÇÃO</span><span style="font-family:'Fraunces',serif;font-size:46px;line-height:1">{{ret30}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A5F14">meta FSRS 90%</span></div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:6px;border-left:1px solid #E3D9C4"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#8A7C68">ESCUDO</span><span style="font-family:'Fraunces',serif;font-size:30px;line-height:1.2;font-style:italic">{{escudoStatus}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{escudoUltimo}}</span></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;padding:clamp(18px,3.4cqi,30px);border-radius:24px;background:#FDFBF5;border:1px solid #E3D9C4">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:baseline">
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:24px">Um ano <span style="font-style:italic;color:#4F7358">de estudo</span></h2>
+      <div style="display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68">menos <i style="width:11px;height:11px;border-radius:3px;background:#EDE4D0"></i><i style="width:11px;height:11px;border-radius:3px;background:#C9E0CC"></i><i style="width:11px;height:11px;border-radius:3px;background:#87BC96"></i><i style="width:11px;height:11px;border-radius:3px;background:#579C70"></i><i style="width:11px;height:11px;border-radius:3px;background:#37794E"></i> mais <i style="width:11px;height:11px;border-radius:3px;margin-left:10px;box-shadow:inset 0 0 0 1.5px #D98CAE"></i> meta batida</div>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:4px">
+      <div style="min-width:640px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;padding-right:20px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A7C68"><sc-for list="{{months}}" as="m"><span>{{m}}</span></sc-for></div>
+        <div style="display:grid;grid-template-columns:repeat(53,1fr);gap:3px">
+          <sc-for list="{{year}}" as="wk" hint-placeholder-count="53">
+            <div style="display:grid;grid-template-rows:repeat(7,1fr);gap:3px">
+              <sc-for list="{{wk.days}}" as="c"><div title="{{c.t}}" style="aspect-ratio:1;border-radius:3px;background:{{c.bg}};box-shadow:{{c.sh}}"></div></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:22px">
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:24px;background-color:#E4E8D6;background-image:repeating-linear-gradient(135deg,rgba(85,100,63,.07) 0 1px,transparent 1px 9px)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:22px">Retenção <span style="font-style:italic">por semana</span></h2><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#55643F">% bom + fácil</span></div>
+      <div style="position:relative;display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:14px">
+        <div style="position:absolute;left:0;right:0;bottom:{{ret90}};border-top:1px dashed rgba(85,100,63,.5)"><span style="position:absolute;right:0;top:-16px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#55643F">90%</span></div>
+        <sc-for list="{{retWeeks}}" as="b" hint-placeholder-count="12">
+          <div title="{{b.t}}" style="flex:1;height:{{b.h}};border-radius:4px 4px 2px 2px;background:#579C70;position:relative"></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#55643F"><sc-for list="{{retAxis}}" as="x"><span>{{x}}</span></sc-for></div>
+    </div>
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:24px;background:#FDFBF5;border:1px solid #E3D9C4">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:22px">Próximas <span style="font-style:italic;color:#A8436E">revisões</span></h2><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68">14 dias</span></div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:110px">
+        <sc-for list="{{load14}}" as="b" hint-placeholder-count="14"><div title="{{b.t}}" style="flex:1;height:{{b.h}};border-radius:4px 4px 2px 2px;background:{{b.c}}"></div></sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px dashed #E3D9C4;padding-top:12px">
+        <sc-for list="{{nextList}}" as="n" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68">{{n.l}}</span><span style="font-family:'Fraunces',serif;font-size:26px">{{n.v}}</span></div></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+    <div style="flex:1.3 1 340px;min-width:0;display:flex;flex-direction:column;gap:14px">
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:24px">Composição <span style="font-style:italic;color:#4F7358">da memória</span></h2>
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <sc-for list="{{memLegend}}" as="m" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:6px;font-size:13.5px"><i style="width:11px;height:11px;border-radius:50%;background:{{m.c}}"></i>{{m.l}} <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A7C68">{{m.v}}</span></span></sc-for>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end;height:170px">
+        <sc-for list="{{memMonths}}" as="mo" hint-placeholder-count="6">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+            <div style="width:100%;max-width:44px;height:{{mo.h}};display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{mo.segs}}" as="sg"><div title="{{sg.t}}" style="flex:{{sg.v}};background:{{sg.c}};border-radius:4px"></div></sc-for>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A7C68">{{mo.l}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px">
+      <h2 style="margin:0 0 8px;font-family:'Fraunces',serif;font-weight:400;font-size:24px">Cards que estão te <span style="font-style:italic;color:#A3303F">dando trabalho</span></h2>
+      <sc-for list="{{leeches}}" as="l" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid #E3D9C4;opacity:{{l.op}}">
+          <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between">
+            <span style="font-family:'Fraunces',serif;font-size:16.5px;line-height:1.3">{{l.q}}</span>
+            <span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A3303F">{{l.err}} erros</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8A7C68;margin-right:auto">{{l.deck}}</span>
+            <sc-if value="{{l.active}}">
+              <button sc-camel-on-click="{{l.rewrite}}" style="height:32px;padding:0 14px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#F4D9E3">Reescrever</button>
+              <button sc-camel-on-click="{{l.suspend}}" style="height:32px;padding:0 14px;border-radius:999px;border:none;background:transparent;font-size:12.5px;font-weight:600;color:#8A7C68;cursor:pointer" style-hover="background:#F6EFE0">Suspender</button>
+            </sc-if>
+            <sc-if value="{{l.susp}}"><button sc-camel-on-click="{{l.suspend}}" style="height:32px;padding:0 14px;border-radius:999px;border:1px dashed #E3D9C4;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;cursor:pointer">suspenso · reativar</button></sc-if>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{noLeeches}}"><div style="padding:16px 0;border-top:1px solid #E3D9C4;font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:#8A7C68">Nenhum card com 8 erros ou mais. Até agora, tudo firme.</div></sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- AJUSTES -->
+<sc-if value="{{isAjustes}}">
+<div style="display:flex;flex-direction:column;gap:34px;animation:fadeUp .35s ease both;max-width:880px">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">05 · ajustes</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Do <span style="font-style:italic;color:#A8436E">seu</span> jeito.</h1>
+  </div>
+
+  <section style="display:flex;flex-wrap:wrap;gap:16px 40px;padding-top:22px;border-top:1px solid #E3D9C4">
+    <div style="flex:0 0 190px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A8436E">01 · RITMO</span><span style="font-size:13.5px;color:#6E6250;line-height:1.45">Um ponto de partida. Dá para ajustar cada número depois.</span></div>
+    <div style="flex:1 1 420px;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+      <sc-for list="{{presets}}" as="p" hint-placeholder-count="3">
+        <button sc-camel-on-click="{{p.pick}}" style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px;border-radius:20px;border:{{p.bd}};background-color:{{p.bg}};background-image:{{p.pat}};background-size:{{p.ps}};text-align:left;cursor:pointer;transition:transform .15s" style-hover="transform:translateY(-2px)">
+          <span style="position:absolute;right:14px;top:14px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;background:{{p.ck}};color:#FFF">{{p.sym}}</span>
+          <span style="font-family:'Fraunces',serif;font-style:italic;font-size:26px;line-height:1">{{p.l}}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{p.v}} cards/dia</span>
+          <span style="font-size:12.5px;color:#6E6250;line-height:1.4">{{p.d}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-wrap:wrap;gap:16px 40px;padding-top:22px;border-top:1px solid #E3D9C4">
+    <div style="flex:0 0 190px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A8436E">02 · METAS</span><span style="font-size:13.5px;color:#6E6250;line-height:1.45">Meta é alvo: não encerra a sessão. O limite de novos é teto.</span></div>
+    <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column">
+      <sc-for list="{{steppers}}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px dashed #E3D9C4">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:15px">{{t.l}}</span><span style="font-size:12.5px;color:#8A7C68">{{t.d}}</span></div>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">
+            <button sc-camel-on-click="{{t.dec}}" style="width:38px;height:38px;border-radius:50%;border:none;background:#F6EFE0;font-size:18px;cursor:pointer" style-hover="background:#F4D9E3">−</button>
+            <span style="min-width:44px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:15px">{{t.v}}</span>
+            <button sc-camel-on-click="{{t.inc}}" style="width:38px;height:38px;border-radius:50%;border:none;background:#F6EFE0;font-size:18px;cursor:pointer" style-hover="background:#DCEBD9">+</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-wrap:wrap;gap:16px 40px;padding-top:22px;border-top:1px solid #E3D9C4">
+    <div style="flex:0 0 190px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A8436E">03 · DESCANSO</span><span style="font-size:13.5px;color:#6E6250;line-height:1.45">Dias de descanso não quebram a ofensiva.</span></div>
+    <div style="flex:1 1 420px;min-width:0;display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{restDays}}" as="d" hint-placeholder-count="7">
+        <button sc-camel-on-click="{{d.toggle}}" style="min-width:56px;height:48px;padding:0 14px;border-radius:999px;border:1px solid {{d.bd}};background:{{d.bg}};font-weight:700;font-size:14px;cursor:pointer;color:{{d.c}}">{{d.l}}</button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-wrap:wrap;gap:16px 40px;padding-top:22px;border-top:1px solid #E3D9C4">
+    <div style="flex:0 0 190px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A8436E">04 · BACKUP</span></div>
+    <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="position:relative;padding:22px 24px;border-radius:22px;background-color:#FAEBF0;background-image:radial-gradient(rgba(201,72,91,.14) 1.2px,transparent 1.7px);background-size:14px 14px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-family:'Fraunces',serif;font-style:italic;font-size:24px">Seu estudo fica com você.</span>
+        <span style="font-size:14px;line-height:1.5;color:#6E4A57">Seus dados são armazenados localmente neste dispositivo — sem conta, sem servidor, funciona offline. Faça backups periódicos para não perder seu progresso.</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9C3E66;margin-top:4px">{{ultimoBackup}}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <button sc-camel-on-click="{{exportBackup}}" style="height:48px;padding:0 22px;border-radius:999px;border:none;background:#4A4034;color:#FDFBF5;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#3A3229">Exportar dados</button>
+        <button sc-camel-on-click="{{openImportBackup}}" style="height:48px;padding:0 22px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#F6EFE0">Importar dados</button>
+      </div>
+    </div>
+  </section>
+
+  <sc-if value="{{hasArchived}}">
+  <section style="display:flex;flex-wrap:wrap;gap:16px 40px;padding-top:22px;border-top:1px solid #E3D9C4">
+    <div style="flex:0 0 190px;display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#A8436E">05 · ARQUIVADOS</span><span style="font-size:13.5px;color:#6E6250;line-height:1.45">Fora das sessões, mas com todo o histórico guardado.</span></div>
+    <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column">
+      <sc-for list="{{archived}}" as="d">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px dashed #E3D9C4">
+          <span style="width:14px;height:18px;border-radius:3px;flex:none;background:{{d.dot}}"></span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-family:'Fraunces',serif;font-size:18px">{{d.nome}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{d.totalFmt}} cards</span></div>
+          <button sc-camel-on-click="{{d.restore}}" style="height:36px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:700;font-size:13px;cursor:pointer" style-hover="background:#DCEBD9">Restaurar</button>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+  </sc-if>
+</div>
+</sc-if>
+
+
+</div>
+<sc-if value="{{isMobile}}">
+  <nav style="position:sticky;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);padding:8px 6px 14px;background:#FDFBF5;border-top:1px solid #E3D9C4">
+    <sc-for list="{{nav}}" as="it" hint-placeholder-count="5">
+      <button sc-camel-on-click="{{it.onClick}}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;min-height:52px;cursor:pointer">
+        <span style="width:34px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{it.bg}};font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A7C68">{{it.n}}</span>
+        <span style="font-size:11.5px;font-weight:{{it.fw}};color:#4A4034">{{it.label}}</span>
+      </button>
+    </sc-for>
+  </nav>
+</sc-if>
+</main>
+
+<sc-if value="{{modalNb}}">
+  <div sc-camel-on-click="{{closeModal}}" style="position:absolute;inset:0;z-index:20;background:rgba(74,64,52,.32);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .2s ease both">
+    <div sc-camel-on-click="{{stop}}" style="position:relative;width:100%;max-width:480px;max-height:100%;overflow:auto;padding:30px;border-radius:28px;background:#FDFBF5;box-shadow:0 30px 60px -20px rgba(74,64,52,.45);display:flex;flex-direction:column;gap:20px">
+      <div style="position:absolute;top:-10px;left:50%;margin-left:-40px;width:80px;height:20px;background:rgba(220,235,217,.95);transform:rotate(-3deg)"></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#8A7C68">{{nbTag}}</span><h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:30px">Qual é a <span style="font-style:italic;color:#4F7358">matéria?</span></h2></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <input value="{{nb.name}}" sc-camel-on-change="{{onNbName}}" placeholder="Ex.: Microbiologia" style="height:50px;padding:0 20px;border-radius:999px;border:1.5px solid {{nbBd}};background:#F6EFE0;font-size:16px;outline:none">
+        <sc-if value="{{nbErr}}"><span style="font-size:12.5px;color:#A3303F;padding-left:20px">{{nbErrMsg}}</span></sc-if>
+        <input value="{{nb.desc}}" sc-camel-on-change="{{onNbDesc}}" placeholder="Assuntos (opcional) · ex.: bactérias · vírus" style="height:44px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#F6EFE0;font-size:14px;outline:none">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#8A7C68">COR DA FICHA</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <sc-for list="{{nbColors}}" as="c"><button sc-camel-on-click="{{c.pick}}" title="{{c.n}}" style="width:44px;height:44px;border-radius:50%;border:none;background:{{c.bg}};box-shadow:{{c.sh}};cursor:pointer"></button></sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;border:1px solid #E3D9C4">
+        <div style="width:64px;height:48px;border-radius:10px;flex:none;background:{{nbC.bg}}"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-family:'Fraunces',serif;font-size:19px;color:{{nbPrevC}}">{{nbPrev}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{nbPrevSub}}</span></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <button sc-camel-on-click="{{closeModal}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
+        <button sc-camel-on-click="{{createDeck}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">{{nbBtn}}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{modalBackup}}">
+  <div sc-camel-on-click="{{closeModal}}" style="position:absolute;inset:0;z-index:20;background:rgba(74,64,52,.32);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .2s ease both">
+    <div sc-camel-on-click="{{stop}}" style="width:100%;max-width:440px;padding:30px;border-radius:28px;background:#FDFBF5;box-shadow:0 30px 60px -20px rgba(74,64,52,.45);display:flex;flex-direction:column;gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#A3303F">CONFIRMAR</span>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:28px;line-height:1.1">Substituir tudo pelo <span style="font-style:italic">backup?</span></h2>
+      <p style="margin:0;font-size:14.5px;line-height:1.5;color:#6E6250">Os baralhos, cards e histórico atuais serão trocados pelo conteúdo do arquivo. Se estiver em dúvida, exporte um backup antes.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px">
+        <button sc-camel-on-click="{{closeModal}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
+        <button sc-camel-on-click="{{confirmBackup}}" style="height:48px;padding:0 22px;border-radius:999px;border:none;background:#A3303F;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#8C2635">Escolher arquivo e substituir</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{modalConfirm}}">
+  <div sc-camel-on-click="{{closeModal}}" style="position:absolute;inset:0;z-index:20;background:rgba(74,64,52,.32);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .2s ease both">
+    <div sc-camel-on-click="{{stop}}" style="width:100%;max-width:440px;padding:30px;border-radius:28px;background:#FDFBF5;box-shadow:0 30px 60px -20px rgba(74,64,52,.45);display:flex;flex-direction:column;gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#A3303F">CONFIRMAR</span>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:28px;line-height:1.1">{{confTitle}} <span style="font-style:italic">{{confTitleEm}}</span></h2>
+      <p style="margin:0;font-size:14.5px;line-height:1.5;color:#6E6250">{{confText}}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px">
+        <button sc-camel-on-click="{{closeModal}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
+        <button sc-camel-on-click="{{confirmAction}}" style="height:48px;padding:0 22px;border-radius:999px;border:none;background:#A3303F;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#8C2635">{{confBtn}}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{modalLemb}}">
+  <div sc-camel-on-click="{{closeModal}}" style="position:absolute;inset:0;z-index:20;background:rgba(74,64,52,.32);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .2s ease both">
+    <div sc-camel-on-click="{{stop}}" style="position:relative;width:100%;max-width:440px;padding:30px;border-radius:28px;background:#FDFBF5;box-shadow:0 30px 60px -20px rgba(74,64,52,.45);display:flex;flex-direction:column;gap:18px">
+      <div style="position:absolute;top:-10px;left:50%;margin-left:-40px;width:80px;height:20px;background:rgba(243,227,181,.95);transform:rotate(3deg)"></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#A3303F">LEMBRETE ✦</span><h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:30px">Qual é a <span style="font-style:italic;color:#A8436E">próxima prova?</span></h2></div>
+      <input value="{{lb.titulo}}" sc-camel-on-change="{{onLbTitulo}}" placeholder="Ex.: Prova de Anatomia II" style="height:50px;padding:0 20px;border-radius:999px;border:1.5px solid {{lbBd}};background:#F6EFE0;font-size:16px;outline:none">
+      <input type="date" value="{{lb.data}}" sc-camel-on-change="{{onLbData}}" style="height:50px;padding:0 20px;border-radius:999px;border:1.5px solid {{lbBd}};background:#F6EFE0;font-size:15px;font-family:'IBM Plex Mono',monospace;outline:none">
+      <sc-if value="{{lbErr}}"><span style="font-size:12.5px;color:#A3303F;padding-left:20px">Preencha o nome e a data.</span></sc-if>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <sc-if value="{{hasLembrete}}"><button sc-camel-on-click="{{removeLembrete}}" style="height:48px;padding:0 18px;border-radius:999px;border:none;background:transparent;font-weight:600;font-size:14px;color:#A3303F;cursor:pointer;margin-right:auto" style-hover="background:#F6D8D8">Remover</button></sc-if>
+        <button sc-camel-on-click="{{closeModal}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
+        <button sc-camel-on-click="{{saveLembrete}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Salvar</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{hasToast}}">
+  <div style="position:absolute;left:50%;bottom:{{toastBottom}};transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:12px;padding:12px 20px 12px 12px;border-radius:999px;background:{{toastBg}};color:{{toastC}};box-shadow:0 14px 30px -12px rgba(74,64,52,.45);font-size:14px;font-weight:600;white-space:nowrap;max-width:92%;animation:fadeUp .3s ease both">
+    <span style="width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{toastIc}};color:#FFF;font-size:14px;animation:pop .45s ease both">{{toastSym}}</span>
+    <span style="overflow:hidden;text-overflow:ellipsis">{{toastText}}</span>
+    <sc-if value="{{toastMeta}}">
+      <span style="position:absolute;left:24px;top:0;pointer-events:none">
+        <span style="position:absolute;color:#D9BE6B;--dx:-10px;--dy:-44px;animation:sparkle 1s ease-out both">✦</span>
+        <span style="position:absolute;color:#D98CAE;--dx:26px;--dy:-50px;animation:sparkle 1s .08s ease-out both">✦</span>
+        <span style="position:absolute;color:#C9485B;--dx:60px;--dy:-34px;animation:sparkle 1s .16s ease-out both">♥</span>
+        <span style="position:absolute;color:#7FA886;--dx:100px;--dy:-48px;animation:sparkle 1s .12s ease-out both">✦</span>
+      </span>
+    </sc-if>
+  </div>
+</sc-if>
+
+</div>
+</div>

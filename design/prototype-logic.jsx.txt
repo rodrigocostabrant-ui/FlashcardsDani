@@ -1,0 +1,474 @@
+class Component extends DCLogic {
+  mainRef = React.createRef();
+  DECKS = [
+    { id:'ana', nome:'Anatomia II', sub:'Membro superior · tórax', bg:'#F4D9E3', ink:'#9C3E66', dot:'#D98CAE', pat:'radial-gradient(rgba(201,72,91,.18) 1.2px,transparent 1.7px)', ps:'12px 12px', total:312, novos:12, due:9, prog:64, ultimo:'hoje, 08:40' },
+    { id:'fis', nome:'Fisiologia', sub:'Cardiovascular · renal', bg:'#DCEBD9', ink:'#3E6B4A', dot:'#7FA886', pat:'repeating-linear-gradient(135deg,rgba(62,107,74,.12) 0 1px,transparent 1px 8px)', ps:'auto', total:248, novos:8, due:7, prog:71, ultimo:'ontem' },
+    { id:'far', nome:'Farmacologia', sub:'Autonômico · anti-hipertensivos', bg:'#F3E3B5', ink:'#7A5F14', dot:'#D9BE6B', pat:'repeating-linear-gradient(to bottom,transparent 0 13px,rgba(201,72,91,.14) 13px 14px)', ps:'auto', total:406, novos:15, due:14, prog:48, ultimo:'há 2 dias' },
+    { id:'pat', nome:'Patologia', sub:'Inflamação · neoplasias', bg:'#F6D8D8', ink:'#A3303F', dot:'#C9485B', pat:'radial-gradient(rgba(163,48,63,.16) 1.2px,transparent 1.7px)', ps:'10px 10px', total:190, novos:6, due:8, prog:55, ultimo:'há 3 dias' },
+    { id:'cli', nome:'Clínica Médica', sub:'Cardiologia · pneumologia', bg:'#E4E8D6', ink:'#55643F', dot:'#A9B89A', pat:'linear-gradient(rgba(85,100,63,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(85,100,63,.08) 1px,transparent 1px)', ps:'12px 12px', total:157, novos:10, due:4, prog:32, ultimo:'há 5 dias' },
+    { id:'sem', nome:'Semiologia', sub:'Baralho novo', bg:'#FAEBF0', ink:'#9C3E66', dot:'#E7A9BD', pat:'repeating-linear-gradient(135deg,rgba(217,140,174,.14) 0 1px,transparent 1px 8px)', ps:'auto', total:0, novos:0, due:0, prog:0, ultimo:'—' },
+  ];
+  CARDS = {
+    ana:[
+      ['Quais ramos ventrais formam o plexo braquial?','C5, C6, C7, C8 e T1.'],
+      ['Qual nervo é lesado na fratura do colo cirúrgico do úmero?','Nervo axilar — perda da abdução do ombro (deltoide) e da sensibilidade na face lateral do braço.'],
+      ['Artéria que irriga o nó sinoatrial na maioria das pessoas','Artéria coronária direita (cerca de 60% dos casos).'],
+      ['Músculos do manguito rotador','Supraespinal, infraespinal, redondo menor e subescapular.'],
+      ['“Mão em garra” sugere lesão de qual nervo?','Nervo ulnar.'],
+    ],
+    fis:[
+      ['O que diz a lei de Frank-Starling?','Quanto maior o volume diastólico final, maior a força de contração ventricular — até um limite.'],
+      ['Onde o ADH age no néfron?','No ducto coletor: insere aquaporina-2 na membrana e aumenta a reabsorção de água.'],
+      ['Fase 2 do potencial de ação do cardiomiócito','Platô — a entrada de Ca²⁺ (canais tipo L) equilibra a saída de K⁺.'],
+      ['Principal estímulo para liberação de renina','Queda da pressão de perfusão na arteríola aferente.'],
+    ],
+    far:[
+      ['Mecanismo de ação dos IECA','Inibem a enzima conversora de angiotensina → ↓ angiotensina II e ↑ bradicinina (daí a tosse seca).'],
+      ['Antídoto da intoxicação por paracetamol','N-acetilcisteína — repõe a glutationa hepática.'],
+      ['Principais efeitos adversos dos aminoglicosídeos','Nefrotoxicidade e ototoxicidade, ambas dose-dependentes.'],
+      ['Warfarina: qual exame monitora a dose?','TP/INR — alvo habitual entre 2 e 3.'],
+      ['Betabloqueadores cardiosseletivos — exemplos','Atenolol, metoprolol e bisoprolol (β1 > β2).'],
+      ['Antídoto dos benzodiazepínicos','Flumazenil.'],
+      ['Mecanismo dos IBP (omeprazol)','Inibição irreversível da H⁺/K⁺-ATPase da célula parietal.'],
+      ['Sinal clássico de intoxicação digitálica','Xantopsia (visão amarelada), náuseas e arritmias.'],
+    ],
+    pat:[
+      ['Tríade de Virchow','Estase, lesão endotelial e hipercoagulabilidade.'],
+      ['Tipo de necrose do infarto do miocárdio','Necrose de coagulação.'],
+      ['Tipo de necrose da tuberculose','Necrose caseosa.'],
+      ['Hiperplasia × hipertrofia','Hiperplasia: ↑ número de células. Hipertrofia: ↑ tamanho das células.'],
+    ],
+    cli:[
+      ['Critérios de Light: quando o derrame é exsudato?','Proteína pleural/sérica > 0,5, LDH pleural/sérica > 0,6 ou LDH pleural > 2/3 do limite superior.'],
+      ['Tríade de Beck','Hipotensão, turgência jugular e abafamento de bulhas — tamponamento cardíaco.'],
+      ['CURB-65: o que cada letra avalia?','Confusão, Ureia > 50, FR ≥ 30, PA baixa e idade ≥ 65.'],
+    ],
+    sem:[]
+  };
+  IVL = [['1 min','3 dias','9 dias','21 dias'],['1 min','6 min','1 dia','4 dias'],['1 min','5 dias','14 dias','1 mês'],['1 min','2 dias','7 dias','17 dias']];
+  KIND = ['REVISÃO','NOVO','REVISÃO','APRENDENDO'];
+  IMPORT = [
+    ['Captopril','IECA; tosse seca por acúmulo de bradicinina.'],
+    ['Losartana','BRA; bloqueia o receptor AT1, sem tosse.'],
+    ['Furosemida','Diurético de alça; inibe o NKCC2 na alça de Henle.'],
+    ['Hidroclorotiazida','Tiazídico; inibe o cotransportador Na⁺/Cl⁻ no túbulo distal.'],
+    ['Espironolactona','Antagonista da aldosterona; poupador de potássio.'],
+    ['Anlodipino','Bloqueador de canal de cálcio di-hidropiridínico; edema de membros inferiores.'],
+    ['Propranolol','Betabloqueador não seletivo; cuidado em asmáticos.'],
+    ['Atenolol','Betabloqueador β1-seletivo.'],
+    ['Nitroglicerina','Doador de NO; venodilatação, cefaleia.'],
+    ['Hidralazina','Vasodilatador arterial direto; pode induzir lúpus.'],
+    ['Clonidina','Agonista α2 central; hipertensão rebote na suspensão.'],
+    ['Metildopa','Agonista α2 central; seguro na gestação.'],
+  ];
+  STRATS = [
+    { id:'pre', l:'Prefixos (P: / R:)', c:0 },
+    { id:'col', l:'Duas colunas', c:41 },
+    { id:'sep', l:'Separador na linha (termo — definição)', c:92 },
+    { id:'num', l:'Lista numerada', c:18 },
+    { id:'alt', l:'Linhas alternadas', c:55 },
+    { id:'blo', l:'Blocos por linha em branco', c:37 },
+  ];
+  COLORS = [
+    { bg:'#F4D9E3', ink:'#9C3E66', dot:'#D98CAE', n:'Rosa bebê' },
+    { bg:'#DCEBD9', ink:'#3E6B4A', dot:'#7FA886', n:'Verde claro' },
+    { bg:'#F3E3B5', ink:'#7A5F14', dot:'#D9BE6B', n:'Manteiga' },
+    { bg:'#E4E8D6', ink:'#55643F', dot:'#A9B89A', n:'Sálvia' },
+    { bg:'#F6D8D8', ink:'#A3303F', dot:'#C9485B', n:'Cereja' },
+  ];
+
+  state = this.init();
+
+  init() {
+    let seed = 20260926;
+    const r = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    const lv = ['#EDE4D0','#C9E0CC','#87BC96','#579C70','#37794E'];
+    const months = ['out','nov','dez','jan','fev','mar','abr','mai','jun','jul','ago','set'];
+    this.year = [];
+    for (let w = 0; w < 53; w++) {
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const i = w * 7 + d;
+        if (i > 369) { days.push({ bg:'transparent', sh:'inset 0 0 0 1px #E3D9C4', t:'futuro' }); continue; }
+        const p = 0.3 + (i / 371) * 0.6;
+        let v = r() < p ? 1 + Math.floor(r() * 4) : 0;
+        if (d === 6 && r() < .6) v = 0;
+        days.push({ bg: lv[v], sh: v >= 3 ? 'inset 0 0 0 1.5px #D98CAE' : 'none', t: v ? (v * 14) + ' cards' : 'sem estudo' });
+      }
+      this.year.push({ days });
+    }
+    this.months = months;
+    const pat = [3,4,3,'r',2,3,4,4,3,1,'r',3,3,4,2,0,'r',4,3,3,4,4,'r',3,4,3,3,4,4,2];
+    this.m30raw = pat;
+    return {
+      screen:'inicio', deckId:'far', winW: typeof window !== 'undefined' ? window.innerWidth : 1280,
+      decks: this.DECKS.map(d => ({ ...d })),
+      answered:22, created:3, metaResp:30, metaNovos:20, metaCriar:5, preset:'firme',
+      rest:[false,false,false,false,false,false,true],
+      queue:[], pos:0, revealed:false, results:[0,0,0,0], fb:0, sessName:'', sessStart:0, sessEnd:0, metaHitInSession:false,
+      imp:{ step:1, prog:0, items:[], strat:'sep', deck:'far', drag:false },
+      cc:{ q:'', a:'', deck:'far', tags:['cardio'], tagIn:'', tried:false, fromLeech:false },
+      modal:null, nb:{ name:'', color:0, tried:false },
+      toast:null, search:'',
+      leeches:[
+        { id:1, q:'Ramos da artéria axilar em cada uma das três partes', deck:'Anatomia II', err:11, susp:false },
+        { id:2, q:'Critérios de Light para derrame pleural', deck:'Clínica Médica', err:9, susp:false },
+        { id:3, q:'Canais iônicos em cada fase do potencial de ação cardíaco', deck:'Fisiologia', err:9, susp:false },
+        { id:4, q:'Classificação de Vaughan-Williams dos antiarrítmicos', deck:'Farmacologia', err:8, susp:false },
+      ],
+    };
+  }
+
+  componentDidMount() {
+    this.onResize = () => this.setState({ winW: window.innerWidth });
+    window.addEventListener('resize', this.onResize);
+    this.onKey = e => {
+      const t = e.target && e.target.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+      if (this.state.screen !== 'sessao') return;
+      if (e.code === 'Space') { e.preventDefault(); if (!this.state.revealed) this.setState({ revealed:true }); }
+      if (['1','2','3','4'].includes(e.key) && this.state.revealed) this.rate(+e.key);
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKey);
+    clearInterval(this.impT); clearTimeout(this.fbT); clearTimeout(this.toastT);
+  }
+
+  go = (screen, extra) => {
+    this.setState({ screen, modal:null, ...(extra || {}) });
+    if (this.mainRef.current) this.mainRef.current.scrollTop = 0;
+  };
+  toast = (kind, text) => {
+    clearTimeout(this.toastT);
+    this.setState({ toast:{ kind, text, k: Date.now() } });
+    this.toastT = setTimeout(() => this.setState({ toast:null }), kind === 'meta' ? 3800 : 2800);
+  };
+
+  startSession = (deckId) => {
+    let list = [];
+    if (deckId) list = (this.CARDS[deckId] || []).map(c => ({ c, d: deckId }));
+    else ['far','ana','fis','pat','cli'].forEach(id => this.CARDS[id].slice(0, 3).forEach(c => list.push({ c, d:id })));
+    if (!list.length) return;
+    const queue = list.map((x, i) => {
+      const dk = this.state.decks.find(d => d.id === x.d);
+      return { q:x.c[0], a:x.c[1], deck:dk.nome, deckBg:dk.bg, deckInk:dk.ink, ivl:this.IVL[i % 4], kind:this.KIND[i % 4], again:false };
+    });
+    const dk = deckId ? this.state.decks.find(d => d.id === deckId) : null;
+    this.go('sessao', { queue, pos:0, revealed:false, results:[0,0,0,0], fb:0, sessName: dk ? dk.nome : 'Todos os baralhos', sessStart: Date.now(), metaHitInSession:false });
+  };
+
+  rate = (n) => {
+    const s = this.state;
+    if (!s.revealed || s.fb) return;
+    const results = [...s.results]; results[n - 1]++;
+    let queue = s.queue;
+    if (n === 1) queue = [...queue, { ...queue[s.pos], again:true, kind:'DE NOVO', ivl:['1 min','6 min','10 min','1 dia'] }];
+    const answered = s.answered + 1;
+    this.setState({ results, queue, fb:n, answered });
+    if (answered === s.metaResp && (this.props.celebrate ?? true)) {
+      this.setState({ metaHitInSession:true });
+      this.toast('meta', 'Meta do dia cumprida. Ofensiva: 13 dias.');
+    }
+    clearTimeout(this.fbT);
+    this.fbT = setTimeout(() => {
+      this.setState(st => {
+        const pos = st.pos + 1;
+        if (pos >= st.queue.length) return { screen:'resultado', fb:0, revealed:false, sessEnd: Date.now() };
+        return { pos, fb:0, revealed:false };
+      });
+    }, n === 4 ? 800 : 620);
+  };
+
+  setImp = (patch) => this.setState(s => ({ imp:{ ...s.imp, ...patch } }));
+  startImport = (scanned) => {
+    clearInterval(this.impT);
+    this.setImp({ step:2, prog:0, drag:false, scanned:!!scanned });
+    this.impT = setInterval(() => {
+      const p = this.state.imp.prog + 2;
+      if (this.state.imp.scanned && p >= 34) { clearInterval(this.impT); this.setImp({ step:'erro', prog:34 }); return; }
+      if (p >= 100) {
+        clearInterval(this.impT);
+        const items = this.IMPORT.map((x, i) => ({ id:i + 1, q:x[0], a:x[1], on: i !== 7, dup: i === 7, edit:false }));
+        this.setImp({ step:3, prog:100, items, strat:'sep' });
+        return;
+      }
+      this.setImp({ prog:p });
+    }, 90);
+  };
+  setItem = (id, patch) => this.setImp({ items: this.state.imp.items.map(it => it.id === id ? { ...it, ...patch } : it) });
+
+  setCC = (patch) => this.setState(s => ({ cc:{ ...s.cc, ...patch } }));
+  saveCard = (again) => {
+    const cc = this.state.cc;
+    if (!cc.q.trim() || !cc.a.trim()) { this.setCC({ tried:true }); return; }
+    const deck = this.state.decks.find(d => d.id === cc.deck);
+    this.setState(s => ({ created: s.created + 1, decks: s.decks.map(d => d.id === cc.deck ? { ...d, total:d.total + 1, novos:d.novos + 1 } : d) }));
+    this.setCC({ q:'', a:'', tried:false, fromLeech:false });
+    this.toast('ok', 'Card salvo em ' + deck.nome + '.');
+    if (!again) this.go('baralho', { deckId: cc.deck });
+  };
+
+  sessVals() {
+    const s = this.state;
+    const sCard = s.queue[s.pos] || { q:'', a:'', deck:'', ivl:['','','',''], kind:'' };
+    const fbMap = { 1:['#C9485B','volta em 1 min'], 2:['#B8952F','difícil'], 3:['#4F7358','bom ✓'], 4:['#3D6580','fácil ✦'] };
+    const fb = fbMap[s.fb];
+    const tot = s.results.reduce((a, b) => a + b, 0);
+    const secs = Math.max(1, Math.round((s.sessEnd - s.sessStart) / 1000));
+    const ret = tot ? Math.round((s.results[2] + s.results[3]) / tot * 100) : 0;
+    return {
+      sCard, sessName: s.sessName, sPos: Math.min(s.pos + 1, s.queue.length), sTotal: s.queue.length,
+      sProgW: (s.queue.length ? (s.pos / s.queue.length * 100) : 0) + '%',
+      revealed: s.revealed, notRevealed: !s.revealed,
+      reveal: () => this.setState({ revealed:true }),
+      rate1: () => this.rate(1), rate2: () => this.rate(2), rate3: () => this.rate(3), rate4: () => this.rate(4),
+      ivl1: sCard.ivl[0], ivl2: sCard.ivl[1], ivl3: sCard.ivl[2], ivl4: sCard.ivl[3],
+      hasStamp: !!fb, stampC: fb ? fb[0] : '#000', stampT: fb ? fb[1] : '', isFacilFb: s.fb === 4,
+      sBorder: fb ? fb[0] : '#E3D9C4', sCardT: s.fb === 3 || s.fb === 4 ? 'translateY(-3px)' : s.fb === 1 ? 'translateX(-3px)' : 'none',
+      exitSession: () => { clearTimeout(this.fbT); this.go(s.results.some(x => x) ? 'resultado' : 'estudar', { sessEnd: Date.now(), fb:0 }); },
+      resTotal: tot, resRet: ret + '%', resTime: secs < 60 ? secs + 's' : Math.floor(secs / 60) + 'min',
+      resDist: [['Errei','#E7A9BD'],['Difícil','#E3CB85'],['Bom','#87BC96'],['Fácil','#A9C1D2']].map((x, i) => ({ l:x[0], c:x[1], n:s.results[i] })),
+      resMsg: s.metaHitInSession ? 'E a meta do dia foi batida no meio da sessão. Ofensiva: 13 dias seguidos.' : ret >= 80 ? 'Retenção ótima. Esses cards vão voltar mais espaçados.' : 'Os que você errou voltam logo — é assim que a memória fixa.',
+    };
+  }
+
+  deckVals(decksV) {
+    const s = this.state;
+    const dk0 = decksV.find(d => d.id === s.deckId) || decksV[0];
+    const dk = { ...dk0, notEmpty: !dk0.empty };
+    const states = [['REVISÃO','#F4D9E3','#9C3E66'],['NOVO','#DCEBD9','#3E6B4A'],['APRENDENDO','#F3E3B5','#7A5F14'],['DOMINADO','#E4E8D6','#55643F']];
+    const nexts = ['hoje','hoje','amanhã','em 4 dias','em 12 dias','em 1 mês'];
+    const q = s.search.trim().toLowerCase();
+    const all = (this.CARDS[dk.id] || []).map((c, i) => ({ n: String(i + 1).padStart(2, '0'), q:c[0], a:c[1], state:states[i % 4][0], tb:states[i % 4][1], tc:states[i % 4][2], next:nexts[i % 6] }));
+    const dkCards = q ? all.filter(c => (c.q + ' ' + c.a).toLowerCase().includes(q)) : all;
+    const cc = s.cc;
+    return {
+      dk, dkCards, dkShown: dkCards.length, dkNoResults: !!q && !dkCards.length, search: s.search,
+      onSearch: e => this.setState({ search: e.target.value }),
+      cc, ccErrQ: cc.tried && !cc.q.trim(), ccErrA: cc.tried && !cc.a.trim(),
+      ccPrevQ: cc.q.trim() || 'Sua pergunta aparece aqui', ccPrevQc: cc.q.trim() ? '#4A4034' : '#B5A88F',
+      ccPrevA: cc.a.trim() || 'e a resposta, depois de virar.', ccPrevAc: cc.a.trim() ? '#6E6250' : '#B5A88F',
+      ccTags: cc.tags.map(t => ({ t, rm: () => this.setCC({ tags: this.state.cc.tags.filter(x => x !== t) }) })),
+      onCcQ: e => this.setCC({ q: e.target.value }), onCcA: e => this.setCC({ a: e.target.value }),
+      onCcDeck: e => this.setCC({ deck: e.target.value }), onTagIn: e => this.setCC({ tagIn: e.target.value }),
+      onTagKey: e => {
+        if (e.key !== 'Enter') return; e.preventDefault();
+        const t = this.state.cc.tagIn.trim().replace(/^#/, '').toLowerCase();
+        if (t && !this.state.cc.tags.includes(t)) this.setCC({ tags:[...this.state.cc.tags, t], tagIn:'' }); else this.setCC({ tagIn:'' });
+      },
+      saveCard: () => this.saveCard(false), saveCardAgain: () => this.saveCard(true),
+    };
+  }
+
+  impVals() {
+    const s = this.state, imp = s.imp, st = imp.step;
+    const stepIdx = st === 'erro' ? 2 : st === 4 ? 4 : st;
+    const impSteps = ['ENVIAR','PROCESSANDO','REVISAR'].map((l, i) => {
+      const n = i + 1, done = stepIdx > n, act = stepIdx === n, err = st === 'erro' && n === 2;
+      return { l: '0' + n + ' — ' + l, sym: done ? '✓' : err ? '!' : '0' + n,
+        bg: act ? (err ? '#F6D8D8' : '#FDFBF5') : 'transparent', bd: act ? (err ? '#E7A9BD' : '#D98CAE') : '#E3D9C4',
+        cb: done ? '#7FA886' : act ? (err ? '#C9485B' : '#D98CAE') : '#F6EFE0', cc: done || act ? '#FFF' : '#8A7C68', tc: act || done ? '#4A4034' : '#8A7C68' };
+    });
+    const msgs = ['Lendo seu material','Identificando possíveis perguntas','Montando seus cards'];
+    const mi = imp.prog < 34 ? 0 : imp.prog < 70 ? 1 : 2;
+    const impChecks = msgs.map((l, i) => ({ l, sym: i < mi ? '✓' : '', col: i <= mi ? '#4A4034' : '#B5A88F',
+      bg: i < mi ? '#7FA886' : 'transparent', bd: i < mi ? 'none' : i === mi ? '2px solid #D98CAE' : '1.5px dashed #E3D9C4' }));
+    const strat = this.STRATS.find(x => x.id === imp.strat);
+    const items = imp.items || [];
+    const impItems = items.map((it, i) => ({
+      ...it, num: String(i + 1).padStart(2, '0'), view: !it.edit, editL: it.edit ? 'Pronto' : 'Editar',
+      op: it.on ? 1 : .55, bd: it.edit ? '#D98CAE' : '#E3D9C4',
+      cbBg: it.on ? '#4F7358' : '#FDFBF5', cbBd: it.on ? '#4F7358' : '#D8CCB3', cbSym: it.on ? '✓' : '',
+      toggle: () => this.setItem(it.id, { on: !it.on }), onEdit: () => this.setItem(it.id, { edit: !it.edit }),
+      onDel: () => this.setImp({ items: this.state.imp.items.filter(x => x.id !== it.id) }),
+      onQ: e => this.setItem(it.id, { q: e.target.value }), onA: e => this.setItem(it.id, { a: e.target.value }),
+    }));
+    const sel = items.filter(x => x.on).length;
+    const allOn = items.length && sel === items.length;
+    const deck = s.decks.find(d => d.id === imp.deck);
+    return {
+      imp, impSteps, imp1: st === 1, imp2: st === 2, imp3: st === 3, imp4: st === 4, impErr: st === 'erro',
+      dropBd: imp.drag ? '#B03D66' : '#D98CAE', dropBg: imp.drag ? '#F4D9E3' : '#FAEBF0',
+      onDragOver: e => { e.preventDefault(); if (!this.state.imp.drag) this.setImp({ drag:true }); },
+      onDragLeave: () => this.setImp({ drag:false }),
+      onDrop: e => { e.preventDefault(); this.startImport(false); },
+      startImport: () => this.startImport(false), startImportScanned: () => this.startImport(true),
+      cancelImport: () => { clearInterval(this.impT); this.setImp({ step:1, prog:0 }); },
+      restartImport: () => this.setImp({ step:1, prog:0, items:[] }),
+      impMsg: msgs[mi], impProgW: imp.prog + '%', impPage: Math.max(1, Math.ceil(imp.prog / 100 * 18)), impChecks,
+      impN: items.length, impSel: sel, impConf: strat.c + '%', impLow: strat.c < 60,
+      strats: this.STRATS.map(x => ({ id:x.id, lab: x.l + ' · ' + x.c + '%' })),
+      onStrat: e => { this.setImp({ strat: e.target.value }); this.toast('ok', 'Pares recalculados.'); },
+      onImpDeck: e => this.setImp({ deck: e.target.value }),
+      toggleAll: () => this.setImp({ items: items.map(x => ({ ...x, on: !allOn })) }), toggleAllL: allOn ? 'Desmarcar todos' : 'Marcar todos',
+      impDeckName: deck ? deck.nome : '', impAdded: imp.added || 0,
+      addImport: () => {
+        if (!sel) { this.toast('err', 'Marque pelo menos um card.'); return; }
+        this.setState(st2 => ({ created: st2.created + sel, decks: st2.decks.map(d => d.id === imp.deck ? { ...d, total: d.total + sel, novos: d.novos + sel } : d) }));
+        this.setImp({ step:4, added: sel });
+        if (this.mainRef.current) this.mainRef.current.scrollTop = 0;
+      },
+      goImpDeck: () => this.go('baralho', { deckId: imp.deck, search:'' }),
+    };
+  }
+
+  evoVals() {
+    const s = this.state;
+    const ret = [81, 83, 79, 85, 84, 86, 82, 88, 87, 89, 86, 87];
+    const scale = v => ((v - 60) / 40 * 100).toFixed(0) + '%';
+    const load = [42, 31, 24, 18, 27, 15, 12, 22, 19, 9, 14, 17, 8, 11];
+    const mem = [[420,180,300,160],[380,170,380,240],[330,150,440,340],[300,160,470,450],[260,140,500,560],[220,130,510,660]];
+    const mc = ['#C9E0CC','#87BC96','#579C70','#1A5133'];
+    const ml = ['Novo','Aprendendo','Jovem','Maduro'];
+    const mx = Math.max(...mem.map(m => m.reduce((a, b) => a + b, 0)));
+    return {
+      months: this.months, year: this.year,
+      retWeeks: ret.map((v, i) => ({ h: scale(v), t: 'semana ' + (i + 1) + ' · ' + v + '%' })), ret90: scale(90),
+      load14: load.map((v, i) => ({ h: (v / 42 * 100) + '%', c: i === 0 ? '#AE3D6B' : '#DE97B5', t: (i === 0 ? 'hoje' : '+' + i + ' dias') + ' · ' + v })),
+      nextList: [['Hoje',42],['Amanhã',31],['+2 dias',24],['+3 dias',18]].map(x => ({ l:x[0], v:x[1] })),
+      memLegend: ml.map((l, i) => ({ l, c: mc[i], v: mem[5][i] })),
+      memMonths: ['abr','mai','jun','jul','ago','set'].map((l, i) => ({ l, h: (mem[i].reduce((a, b) => a + b, 0) / mx * 100) + '%',
+        segs: mem[i].map((v, j) => ({ v, c: mc[j], t: ml[j] + ' · ' + v })).reverse() })),
+      leeches: s.leeches.map(l => ({ ...l, active: !l.susp, op: l.susp ? .55 : 1,
+        rewrite: () => { this.setCC({ q: l.q, a:'', deck: { 'Anatomia II':'ana','Clínica Médica':'cli','Fisiologia':'fis','Farmacologia':'far' }[l.deck], fromLeech:true, tried:false }); this.go('criar'); },
+        suspend: () => { this.setState(st => ({ leeches: st.leeches.map(x => x.id === l.id ? { ...x, susp: !x.susp } : x) })); if (!l.susp) this.toast('ok', 'Card suspenso. Ele não aparece mais nas sessões.'); } })),
+    };
+  }
+
+  cfgVals() {
+    const s = this.state;
+    const P = { leve:[15,10], firme:[30,20], intenso:[60,30] };
+    const presets = [
+      { id:'leve', l:'Leve', d:'Semana de prova de outra matéria, ou recomeço.', bg:'#DCEBD9', pat:'radial-gradient(rgba(62,107,74,.16) 1.2px,transparent 1.7px)', ps:'12px 12px' },
+      { id:'firme', l:'Firme', d:'O ritmo do dia a dia. Sustentável.', bg:'#F3E3B5', pat:'repeating-linear-gradient(to bottom,transparent 0 13px,rgba(201,72,91,.14) 13px 14px)', ps:'auto' },
+      { id:'intenso', l:'Intenso', d:'Reta final antes da prova.', bg:'#F4D9E3', pat:'repeating-linear-gradient(135deg,rgba(201,72,91,.13) 0 1px,transparent 1px 7px)', ps:'auto' },
+    ].map(p => { const a = s.preset === p.id; return { ...p, v: P[p.id][0], bd: a ? '2px solid #4A4034' : '2px solid transparent', ck: a ? '#4A4034' : 'rgba(74,64,52,.12)', sym: a ? '✓' : '',
+      pick: () => this.setState({ preset:p.id, metaResp:P[p.id][0], metaNovos:P[p.id][1] }) }; });
+    const mk = (key, l, d, step, min, max) => ({ l, d, v: s[key],
+      dec: () => this.setState(st => ({ [key]: Math.max(min, st[key] - step), preset:'custom' })),
+      inc: () => this.setState(st => ({ [key]: Math.min(max, st[key] + step), preset:'custom' })) });
+    const dl = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    return {
+      presets,
+      steppers: [mk('metaResp','Cards respondidos por dia','sua meta diária',5,5,200), mk('metaNovos','Novos cards por dia','limite de cards novos na fila',5,0,100), mk('metaCriar','Cards criados por dia','meta de escrita',1,0,30)],
+      restDays: dl.map((l, i) => { const on = s.rest[i]; return { l, bg: on ? '#FAEBF0' : '#FDFBF5', bd: on ? '#D98CAE' : '#E3D9C4', c: on ? '#9C3E66' : '#4A4034',
+        toggle: () => this.setState(st => ({ rest: st.rest.map((x, j) => j === i ? !x : x) })) }; }),
+      exportBackup: () => this.toast('ok', 'backup-flashcards-2026-09-26.json salvo.'),
+      openImportBackup: () => this.setState({ modal:'backup' }),
+    };
+  }
+
+  ovVals(isMobile) {
+    const s = this.state, nb = s.nb, t = s.toast;
+    const nbC = this.COLORS[nb.color];
+    const TK = { ok:['#FDFBF5','#4A4034','#4F7358','✓'], meta:['#F3E3B5','#4A4034','#D98CAE','✦'], err:['#F6D8D8','#8C2635','#C9485B','!'] };
+    const tk = t ? TK[t.kind] : TK.ok;
+    return {
+      modalNb: s.modal === 'novoBaralho', modalBackup: s.modal === 'backup',
+      closeModal: () => this.setState({ modal:null }), stop: e => e.stopPropagation(),
+      nb, nbC, nbErr: nb.tried && !nb.name.trim(), nbBd: nb.tried && !nb.name.trim() ? '#C9485B' : '#E3D9C4',
+      nbPrev: nb.name.trim() || 'Nome do baralho', nbPrevC: nb.name.trim() ? '#4A4034' : '#B5A88F',
+      onNbName: e => this.setState({ nb:{ ...this.state.nb, name: e.target.value } }),
+      nbColors: this.COLORS.map((c, i) => ({ ...c, pick: () => this.setState({ nb:{ ...this.state.nb, color:i } }),
+        sh: nb.color === i ? '0 0 0 3px #FDFBF5, 0 0 0 5px #4A4034' : 'inset 0 0 0 1px rgba(74,64,52,.1)' })),
+      createDeck: () => {
+        const name = nb.name.trim();
+        if (!name) { this.setState({ nb:{ ...nb, tried:true } }); return; }
+        const id = 'd' + Date.now();
+        const pat = ['radial-gradient(rgba(201,72,91,.18) 1.2px,transparent 1.7px)','repeating-linear-gradient(135deg,rgba(62,107,74,.12) 0 1px,transparent 1px 8px)','repeating-linear-gradient(to bottom,transparent 0 13px,rgba(201,72,91,.14) 13px 14px)','linear-gradient(rgba(85,100,63,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(85,100,63,.08) 1px,transparent 1px)','radial-gradient(rgba(163,48,63,.16) 1.2px,transparent 1.7px)'][nb.color];
+        this.CARDS[id] = [];
+        this.setState(st => ({ decks:[...st.decks, { id, nome:name, sub:'Baralho novo', bg:nbC.bg, ink:nbC.ink, dot:nbC.dot, pat, ps:'12px 12px', total:0, novos:0, due:0, prog:0, ultimo:'—' }] }));
+        this.go('baralho', { deckId:id, search:'' });
+        this.toast('ok', 'Baralho “' + name + '” criado.');
+      },
+      confirmBackup: () => { this.setState({ modal:null }); this.toast('err', 'Esse arquivo não parece um backup do app.'); },
+      hasToast: !!t, toastText: t ? t.text : '', toastBg: tk[0], toastC: tk[1], toastIc: tk[2], toastSym: tk[3], toastMeta: !!t && t.kind === 'meta',
+      toastBottom: isMobile ? '96px' : '28px',
+      demoToastOk: () => this.toast('ok', 'Card salvo em Farmacologia.'), demoToastMeta: () => this.toast('meta', 'Meta do dia cumprida. Ofensiva: 13 dias.'),
+      demoToastErr: () => this.toast('err', 'Não foi possível salvar. Tente de novo.'), demoConfirm: () => this.setState({ modal:'backup' }),
+      swatches: [['#F6EFE0','Manteiga','fundo'],['#FDFBF5','Papel','superfície'],['#4A4034','Tinta','texto'],['#8A7C68','Suave','secundário'],['#F4D9E3','Rosa bebê','estudo'],['#D98CAE','Rosa','acento'],['#B03D66','Rosa forte','ação'],['#C9485B','Cereja','detalhe/erro'],['#DCEBD9','Verde claro','baralhos'],['#A9B89A','Sálvia','evolução'],['#F3E3B5','Amarelo manteiga','início'],['#DCE7EE','Céu','fácil']].map(x => ({ c:x[0], n:x[1], u:x[2] })),
+    };
+  }
+
+  renderVals() {
+    const s = this.state, P = this.props;
+    const vp = P.viewport ?? 'auto';
+    const showIntervals = P.showIntervals ?? true;
+    const w = s.winW;
+    const isMobile = vp === 'mobile' || (vp === 'auto' && w < 760);
+    const isTablet = !isMobile && (vp === 'tablet' || (vp === 'auto' && w < 1100));
+    const framed = vp === 'mobile' || vp === 'tablet';
+    const sec = { inicio:'inicio', estudar:'estudar', sessao:'estudar', resultado:'estudar', baralhos:'baralhos', baralho:'baralhos', criar:'baralhos', importar:'baralhos', evolucao:'evolucao', ajustes:'ajustes', estados:'ajustes' }[s.screen];
+    const navDefs = [
+      { id:'inicio', n:'01', label:'Início', tint:'#F3E3B5' },
+      { id:'estudar', n:'02', label:'Estudar', tint:'#F4D9E3' },
+      { id:'baralhos', n:'03', label:'Baralhos', tint:'#DCEBD9' },
+      { id:'evolucao', n:'04', label:'Evolução', tint:'#E4E8D6' },
+      { id:'ajustes', n:'05', label:'Ajustes', tint:'#FAEBF0' },
+    ];
+    const nav = navDefs.map(it => {
+      const a = sec === it.id;
+      return { ...it, bg: a ? it.tint : 'transparent', mark: a && !isTablet ? '#B03D66' : 'transparent', fs: a ? 'italic' : 'normal', fw: a ? '700' : '500', full: !isTablet, justify: isTablet ? 'center' : 'flex-start', onClick: () => this.go(it.id) };
+    });
+
+    const faltam = Math.max(0, s.metaResp - s.answered);
+    const ringOffset = (326.7 * (1 - Math.min(1, s.answered / s.metaResp))).toFixed(1);
+    const dueTotal = s.decks.reduce((a, d) => a + d.due, 0);
+
+    const weekL = ['S','T','Q','Q','S','S','D'];
+    const week = weekL.map((l, i) => {
+      if (i < 5) return { l, sym:'✓', bg:'#DCEBD9', bd:'none', c:'#3E6B4A' };
+      if (i === 5) return s.answered >= s.metaResp ? { l, sym:'✦', bg:'#D98CAE', bd:'none', c:'#FFF' } : { l, sym:'', bg:'#FDFBF5', bd:'1.5px solid #D98CAE', c:'#A8436E' };
+      return { l, sym:'·', bg:'transparent', bd:'1.5px dashed #E3D9C4', c:'#8A7C68' };
+    });
+
+    const m30 = this.m30raw.map((v, i) => {
+      const t = (i + 1) + ' dias atrás';
+      if (v === 'r') return { bg:'#FDFBF5', sh:'inset 0 0 0 1px #E3D9C4', t: t + ' · descanso' };
+      if (v === 0) return { bg:'#F4D9E3', sh:'none', t: t + ' · sem estudo' };
+      if (v === 1 || v === 2) return { bg:'#F3E3B5', sh:'none', t: t + ' · abaixo da meta' };
+      return { bg: v === 4 ? '#579C70' : '#87BC96', sh:'none', t: t + ' · meta batida' };
+    });
+    const m30count = this.m30raw.filter(v => v !== 'r').length;
+    const m30met = this.m30raw.filter(v => v === 3 || v === 4).length;
+
+    const next7v = [42, 31, 24, 18, 27, 15, 12];
+    const next7l = ['hoje','dom','seg','ter','qua','qui','sex'];
+    const next7 = next7v.map((v, i) => ({ v, l: next7l[i], h: Math.round(v / 42 * 80) + 'px', c: i === 0 ? '#D98CAE' : '#F4D9E3' }));
+
+    const decksV = s.decks.map(d => ({
+      ...d, progW: d.prog + '%', hasDue: d.due > 0, empty: d.total === 0,
+      totalFmt: d.total.toLocaleString('pt-BR'),
+      open: () => this.go('baralho', { deckId:d.id, search:'' }),
+      study: () => this.startSession(d.id),
+    }));
+
+    return {
+      deskPad: framed ? '28px 16px' : '0', frameMax: vp === 'mobile' ? '390px' : vp === 'tablet' ? '900px' : '100%',
+      frameH: vp === 'mobile' ? '844px' : vp === 'tablet' ? '1080px' : '100vh', frameRadius: framed ? '34px' : '0',
+      frameShadow: framed ? '0 0 0 10px #2E2822, 0 30px 60px rgba(46,40,34,.3)' : 'none',
+      showSidebar: !isMobile, sideFull: !isTablet, sideCompact: isTablet, sideW: isTablet ? '84px' : '248px',
+      isMobile, nav, mainRef: this.mainRef, showIntervals,
+      streak: s.answered >= s.metaResp ? 13 : 12, answered: s.answered, metaResp: s.metaResp, metaCriar: s.metaCriar, metaNovos: s.metaNovos, created: s.created,
+      createdPct: Math.min(100, s.created / s.metaCriar * 100) + '%', novosPct: Math.min(100, 8 / s.metaNovos * 100) + '%',
+      faltam, ringOffset, dueTotal, metaMsg: faltam ? 'Faltam ' + faltam + '.' : 'Meta cumprida ✦',
+      week, m30, m30count, m30met, m30pct: Math.round(m30met / m30count * 100) + '%', next7,
+      decksV, decksDue: decksV.filter(d => d.hasDue),
+      isInicio: s.screen === 'inicio', isEstudar: s.screen === 'estudar', isSessao: s.screen === 'sessao', isResultado: s.screen === 'resultado',
+      ...this.sessVals(), ...this.deckVals(decksV), ...this.impVals(),
+      isImportar: s.screen === 'importar', isEvolucao: s.screen === 'evolucao', isAjustes: s.screen === 'ajustes', isEstados: s.screen === 'estados',
+      ...this.evoVals(), ...this.cfgVals(), ...this.ovVals(isMobile),
+      isBaralhos: s.screen === 'baralhos', isBaralho: s.screen === 'baralho', isCriar: s.screen === 'criar',
+      deckCount: s.decks.length, cardCount: s.decks.reduce((a, d) => a + d.total, 0).toLocaleString('pt-BR'),
+      openNovoBaralho: () => this.setState({ modal:'novoBaralho', nb:{ name:'', color:0, tried:false } }),
+      goEstudar: () => this.go('estudar'), goInicio: () => this.go('inicio'),
+      goAjustes: () => this.go('ajustes'), goBaralhos: () => this.go('baralhos'), goEstados: () => this.go('estados'),
+      goCriar: () => { this.setCC({ deck: s.screen === 'baralho' ? s.deckId : s.cc.deck }); this.go('criar'); },
+      goImport: () => { this.setImp({ step:1, prog:0 }); this.go('importar'); },
+      startAll: () => this.startSession(null),
+    };
+  }
+}
