@@ -20,7 +20,9 @@ export interface Par {
   verso: string;
 }
 
-export type EstrategiaId = 'pre' | 'col' | 'sep' | 'num' | 'alt' | 'blo';
+/** 'csv' não é uma heurística: é o resultado direto de um arquivo em colunas (planilha, Anki em texto, Quizlet). */
+export type EstrategiaId = 'pre' | 'col' | 'sep' | 'num' | 'alt' | 'blo' | 'csv';
+type Heuristica = Exclude<EstrategiaId, 'csv'>;
 
 export interface ResultadoEstrategia {
   id: EstrategiaId;
@@ -36,7 +38,7 @@ export interface ResultadoDeteccao {
   melhor: EstrategiaId;
 }
 
-export const ESTRATEGIAS: { id: EstrategiaId; label: string; peso: number }[] = [
+export const ESTRATEGIAS: { id: Heuristica; label: string; peso: number }[] = [
   { id: 'pre', label: 'Prefixos (P: / R:)', peso: 1 },
   { id: 'col', label: 'Duas colunas', peso: 1 },
   { id: 'sep', label: 'Separador na linha (termo — definição)', peso: 1 },
@@ -202,7 +204,7 @@ function blocos(linhas: Linha[]): Bruto {
   return { pares, descartadas };
 }
 
-const IMPL: Record<EstrategiaId, (l: Linha[]) => Bruto> = {
+const IMPL: Record<Heuristica, (l: Linha[]) => Bruto> = {
   pre: prefixos, col: duasColunas, sep: separador, num: numerada, alt: alternadas, blo: blocos,
 };
 

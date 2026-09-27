@@ -1,22 +1,28 @@
 import {
   useEffect, useMemo, useRef, useState,
-  type ChangeEvent, type DragEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent,
+  type ChangeEvent, type ClipboardEvent as ReactClipboardEvent, type DragEvent, type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
 } from 'react';
+import type { ResultadoImport } from '../importers/anki';
+import { buildDeckFile, parseDeckFile } from '../importers/deckFile';
+import { textToPairs } from '../importers/text';
 import { BackupInvalido, exportBackup as buildBackup, importBackup, validateBackup } from '../db/backup';
 import * as repo from '../db/repo';
 import { db, type CardRow, type Config, type Preset } from '../db/schema';
 import { dayStatus, disciplina30, streak as calcStreak, type GoalCfg } from '../goals';
 import { addDays, dayKey, diffDays, mondayOf, parseDayKey } from '../lib/dates';
 import { DIAS_SEMANA, MESES, MESES_LONGOS, fmtMinutes, fmtNum, lastStudyLabel, nextDueLabel, plural, shortDate, todayLabel } from '../lib/format';
-import { ESTRATEGIAS, detectCards, type EstrategiaId, type ResultadoDeteccao } from '../pdf/detect';
+import { ESTRATEGIAS, detectCards, paginasDeTexto, type EstrategiaId, type ResultadoDeteccao } from '../pdf/detect';
 import { State, buildQueue, previewIntervals, rate as fsrsRate, type Nota } from '../scheduler';
-import { downloadJson, pickFile } from './files';
+import { downloadJson, pickFile, pickFiles } from './files';
+import { imagesFromClipboard, prepareImage, useMediaUrls } from './media';
 import * as st from './stats';
 import { DECK_COLORS, MEM_COLORS, STATE_TAGS, deckColor } from './theme';
 
 type Screen = 'inicio' | 'estudar' | 'sessao' | 'resultado' | 'baralhos' | 'baralho' | 'criar' | 'importar' | 'evolucao' | 'ajustes';
-type Modal = null | 'novoBaralho' | 'backup' | 'confirm' | 'lembrete';
-type ImpErro = 'senha' | 'escaneado' | 'invalido' | 'vazio';
+type Modal = null | 'novoBaralho' | 'backup' | 'confirm' | 'lembrete' | 'img';
+type ImpErro = 'senha' | 'escaneado' | 'invalido' | 'vazio' | 'anki' | 'json' | 'formato';
+type ImpKind = 'pdf' | 'texto' | 'anki' | 'json';
 
 interface QItem { id: string; kind: string }
 interface Session {
@@ -34,7 +40,14 @@ interface Session {
 }
 interface ImpItem { id: number; q: string; a: string; on: boolean; dup: boolean; edit: boolean }
 interface ImpState {
-  step: 1 | 2 | 3 | 4 | 'erro';
+  step: 1 | 2 | 3 | 'dk' | 4 | 'erro';
+  kind: ImpKind;
+  /** Baralhos prontos (Anki, arquivo .json) e quais estão marcados. */
+  dk: ResultadoImport | null;
+  dkOn: boolean[];
+  doneDecks: string[];
+  pasteOpen: boolean;
+  paste: string;
   prog: number;
   pages: number;
   done: number;
@@ -48,14 +61,34 @@ interface ImpState {
   added: number;
   erro: ImpErro | null;
 }
-interface CC { q: string; a: string; deck: string; tags: string[]; tagIn: string; tried: boolean; fromLeech: boolean; editId: string | null }
+interface CC {
+  q: string;
+  a: string;
+  imgsQ: string[];
+  imgsA: string[];
+  deck: string;
+  tags: string[];
+  tagIn: string;
+  tried: boolean;
+  fromLeech: boolean;
+  editId: string | null;
+}
 interface NB { name: string; desc: string; color: number; tried: boolean; editId: string | null }
 interface Confirm { title: string; titleEm: string; text: string; btn: string; action: () => void | Promise<void> }
 interface Toast { kind: 'ok' | 'meta' | 'err'; text: string; k: number }
 
 const EMPTY_SESSION: Session = { queue: [], pos: 0, revealed: false, fb: 0, fbText: '', results: [0, 0, 0, 0], name: '', start: 0, end: 0, shownAt: 0, metaHit: false };
-const EMPTY_IMP: ImpState = { step: 1, prog: 0, pages: 0, done: 0, fileName: '', fileSize: 0, items: [], strat: 'sep', deck: '', drag: false, result: null, added: 0, erro: null };
-const EMPTY_CC: CC = { q: '', a: '', deck: '', tags: [], tagIn: '', tried: false, fromLeech: false, editId: null };
+const EMPTY_IMP: ImpState = {
+  step: 1, kind: 'pdf', dk: null, dkOn: [], doneDecks: [], pasteOpen: false, paste: '',
+  prog: 0, pages: 0, done: 0, fileName: '', fileSize: 0, items: [], strat: 'sep', deck: '', drag: false, result: null, added: 0, erro: null,
+};
+const EMPTY_CC: CC = { q: '', a: '', imgsQ: [], imgsA: [], deck: '', tags: [], tagIn: '', tried: false, fromLeech: false, editId: null };
+const DK_PAGE = 300;
+
+async function loadSql() {
+  const [{ default: initSqlJs }, { default: wasmUrl }] = await Promise.all([import('sql.js'), import('sql.js/dist/sql-wasm.wasm?url')]);
+  return initSqlJs({ locateFile: () => wasmUrl });
+}
 
 const PRESET_INFO: { id: Exclude<Preset, 'custom'>; l: string; d: string; bg: string; pat: string; ps: string }[] = [
   { id: 'leve', l: 'Leve', d: 'Semana de prova de outra matéria, ou recomeço.', bg: '#DCEBD9', pat: 'radial-gradient(rgba(62,107,74,.16) 1.2px,transparent 1.7px)', ps: '12px 12px' },
@@ -75,7 +108,19 @@ const IMP_ERRORS: Record<ImpErro, { tag: string; title: string; em: string; text
   },
   vazio: {
     tag: 'NENHUM PAR ENCONTRADO', title: 'Li o texto, mas não achei', em: 'perguntas.',
-    text: 'O PDF tem texto, mas nenhuma das seis estratégias conseguiu montar pares. Resumos com P:/R:, “termo — definição” ou tabelas em duas colunas funcionam melhor. Nenhum card foi criado.',
+    text: 'O texto foi lido, mas nenhuma das seis estratégias conseguiu montar pares. Resumos com P:/R:, “termo — definição”, uma pergunta e resposta por linha separadas por tab, ou tabelas em duas colunas funcionam melhor. Nenhum card foi criado.',
+  },
+  anki: {
+    tag: 'ARQUIVO DO ANKI', title: 'Não consegui ler', em: 'esse baralho.',
+    text: 'O arquivo não parece um .apkg válido ou está corrompido. No Anki, use Arquivo → Exportar → “Pacote de baralho do Anki (.apkg)” e tente de novo. Nada foi importado.',
+  },
+  json: {
+    tag: 'ARQUIVO .JSON', title: 'Esse arquivo não é', em: 'um baralho.',
+    text: 'Só dá para importar aqui baralhos exportados por este app (botão “exportar” no baralho). Se for um backup completo, use Ajustes → Importar dados.',
+  },
+  formato: {
+    tag: 'FORMATO NÃO SUPORTADO', title: 'Não sei ler', em: 'esse tipo de arquivo.',
+    text: 'Use PDF, .apkg do Anki, planilha .csv, texto .txt/.tsv ou um baralho .json exportado daqui. Nada foi importado.',
   },
 };
 
@@ -106,6 +151,8 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [lb, setLb] = useState({ titulo: '', data: '', tried: false });
   const [toastState, setToast] = useState<Toast | null>(null);
+  const [dkLimit, setDkLimit] = useState(DK_PAGE);
+  const [imgFull, setImgFull] = useState('');
   const [winW, setWinW] = useState(() => window.innerWidth);
 
   const mainRef = useRef<HTMLElement>(null);
@@ -128,6 +175,19 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
   const activeIds = useMemo(() => new Set(activeDecks.map((d) => d.id)), [activeDecks]);
   const deckById = useMemo(() => new Map(data.decks.map((d) => [d.id, d])), [data.decks]);
   const cardMap = useMemo(() => new Map(data.cards.map((c) => [c.id, c])), [data.cards]);
+
+  // Imagens na tela agora: card da sessão (e o próximo, para já estar carregado) e o card em edição.
+  const sessCard = screen === 'sessao' ? cardMap.get(sess.queue[sess.pos]?.id ?? '') : undefined;
+  const nextCard = screen === 'sessao' ? cardMap.get(sess.queue[sess.pos + 1]?.id ?? '') : undefined;
+  const mediaUrl = useMediaUrls([
+    ...(sessCard?.imgsFrente ?? []), ...(sessCard?.imgsVerso ?? []),
+    ...(nextCard?.imgsFrente ?? []), ...(nextCard?.imgsVerso ?? []),
+    ...(screen === 'criar' ? [...cc.imgsQ, ...cc.imgsA] : []),
+  ]);
+  const openImg = (url: string) => () => {
+    setImgFull(url);
+    setModal('img');
+  };
   const stats = useMemo(() => st.deckStats(data.cards, data.reviews, now), [data.cards, data.reviews, today]);
   const streakInfo = useMemo(() => calcStreak(today, diasMap, goalCfg), [today, diasMap, goalCfg]);
   const disc = useMemo(() => disciplina30(today, diasMap, goalCfg), [today, diasMap, goalCfg]);
@@ -154,6 +214,7 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setModal(null);
       const t = (e.target as HTMLElement | null)?.tagName;
       if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || screenRef.current !== 'sessao') return;
       if (e.code === 'Space') {
@@ -174,7 +235,10 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
   // ---------- ações básicas ----------
   const go = (s: Screen, extra?: { deckId?: string }) => {
     if (extra?.deckId !== undefined) setDeckId(extra.deckId);
-    if (s === 'baralho') setSearch('');
+    if (s === 'baralho') {
+      setSearch('');
+      setDkLimit(DK_PAGE);
+    }
     setScreen(s);
     setModal(null);
     mainRef.current?.scrollTo({ top: 0 });
@@ -242,9 +306,27 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
         return;
       }
       const id = await repo.createDeck(db, name, nb.desc, nb.color, Date.now());
-      go('baralho', { deckId: id });
       toast('ok', `Baralho “${name}” criado.`);
+      // Criado a partir do editor de card: fica no editor, já com o baralho novo escolhido.
+      if (screen === 'criar') {
+        setCCState((c) => ({ ...c, deck: id }));
+        setModal(null);
+      } else go('baralho', { deckId: id });
     });
+
+  const askDeleteDeck = (id: string, nome: string, total: number) => {
+    setConfirm({
+      title: 'Excluir', titleEm: `“${nome}” de vez?`,
+      text: `${fmtNum(total)} ${plural(total, 'card sai', 'cards saem')} para sempre, com as imagens. As revisões já feitas continuam contando na Evolução. Se quiser só tirar das sessões, arquive em vez de excluir.`,
+      btn: 'Excluir baralho',
+      action: () => safely(async () => {
+        await repo.deleteDeck(db, id);
+        if (screenRef.current === 'baralho' || screenRef.current === 'criar') go('baralhos');
+        toast('ok', `“${nome}” foi excluído.`);
+      }),
+    });
+    setModal('confirm');
+  };
 
   // ---------- sessão ----------
   function startSession(only: string | null) {
@@ -314,7 +396,12 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
     const secs = Math.max(1, Math.round(((sess.end || now) - sess.start) / 1000));
     const ret = tot ? Math.round(((sess.results[2] + sess.results[3]) / tot) * 100) : 0;
     const tomorrow = st.dueByDay(data.cards, today, 2, activeIds)[1];
+    const imgs = (ids: string[] | undefined) =>
+      (ids ?? []).map((id) => mediaUrl(id)).filter(Boolean).map((url) => ({ url, open: openImg(url) }));
+    const sImgsQ = imgs(card?.imgsFrente);
+    const sImgsA = imgs(card?.imgsVerso);
     return {
+      sImgsQ, sImgsA, sHasImgsQ: sImgsQ.length > 0, sHasImgsA: sImgsA.length > 0,
       sCard: { q: card?.frente ?? '', a: card?.verso ?? '', deck: deck?.nome ?? '', deckBg: col.bg, deckInk: col.ink, kind: item?.kind ?? '' },
       sessName: sess.name, sPos: Math.min(sess.pos + 1, sess.queue.length), sTotal: sess.queue.length,
       sProgW: `${sess.queue.length ? (sess.pos / sess.queue.length) * 100 : 0}%`,
@@ -353,30 +440,59 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
   };
 
   const editCard = (c: CardRow) => {
-    setCCState({ ...EMPTY_CC, q: c.frente, a: c.verso, deck: c.deckId, tags: c.tags, editId: c.id });
+    setCCState({ ...EMPTY_CC, q: c.frente, a: c.verso, imgsQ: c.imgsFrente ?? [], imgsA: c.imgsVerso ?? [], deck: c.deckId, tags: c.tags, editId: c.id });
     go('criar');
   };
 
+  const ccHasQ = !!cc.q.trim() || cc.imgsQ.length > 0;
+  const ccHasA = !!cc.a.trim() || cc.imgsA.length > 0;
+
   const saveCard = (again: boolean) =>
     safely(async () => {
-      if (!cc.q.trim() || !cc.a.trim()) {
+      if (!ccHasQ || !ccHasA) {
         setCC({ tried: true });
         return;
       }
       let deck = cc.deck && activeIds.has(cc.deck) ? cc.deck : activeDecks[0]?.id;
       if (!deck) deck = await repo.createDeck(db, 'Meu baralho', '', 0, Date.now());
       const nome = deckById.get(deck)?.nome ?? 'Meu baralho';
+      const conteudo = { frente: cc.q.trim(), verso: cc.a.trim(), tags: cc.tags, imgsFrente: cc.imgsQ, imgsVerso: cc.imgsA };
       if (cc.editId) {
-        await repo.updateCard(db, cc.editId, { frente: cc.q.trim(), verso: cc.a.trim(), tags: cc.tags, deckId: deck });
+        await repo.updateCard(db, cc.editId, { ...conteudo, deckId: deck });
         toast('ok', 'Card atualizado.');
         go('baralho', { deckId: deck });
         return;
       }
-      await repo.addCards(db, deck, [{ frente: cc.q, verso: cc.a, tags: cc.tags }], 'manual', Date.now());
+      await repo.addCards(db, deck, [conteudo], 'manual', Date.now());
       toast('ok', `Card salvo em ${nome}.`);
-      if (again) setCC({ q: '', a: '', tried: false, fromLeech: false, deck });
-      else go('baralho', { deckId: deck });
+      if (again) {
+        setCC({ q: '', a: '', imgsQ: [], imgsA: [], tried: false, fromLeech: false, deck });
+        document.querySelector<HTMLTextAreaElement>('main textarea')?.focus();
+      } else go('baralho', { deckId: deck });
     });
+
+  const attachImages = async (side: 'imgsQ' | 'imgsA', files: File[]) => {
+    const imgs = files.filter((f) => f.type.startsWith('image/'));
+    if (!imgs.length) {
+      if (files.length) toast('err', 'Escolha um arquivo de imagem.');
+      return;
+    }
+    await safely(async () => {
+      const ids: string[] = [];
+      for (const f of imgs) ids.push(await repo.saveMedia(db, await prepareImage(f), Date.now()));
+      setCCState((c) => ({ ...c, [side]: [...c[side], ...ids] }));
+    });
+  };
+  const pasteInto = (side: 'imgsQ' | 'imgsA') => (e: ReactClipboardEvent<HTMLTextAreaElement>) => {
+    const files = imagesFromClipboard(e);
+    if (!files.length) return;
+    e.preventDefault();
+    void attachImages(side, files);
+  };
+  const ccImgs = (side: 'imgsQ' | 'imgsA') =>
+    cc[side]
+      .map((id) => ({ url: mediaUrl(id), rm: () => setCCState((c) => ({ ...c, [side]: c[side].filter((x) => x !== id) })) }))
+      .filter((im) => im.url);
 
   const deckVals = () => {
     const found = decksV.find((d) => d.id === deckId) ?? decksV[0];
@@ -384,21 +500,39 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
     const q = norm(search);
     const all = found ? data.cards.filter((c) => c.deckId === found.id).sort((a, b) => a.criadoEm - b.criadoEm) : [];
     const filtered = q ? all.filter((c) => norm(`${c.frente} ${c.verso}`).includes(q)) : all;
-    const shown = filtered.slice(0, 300);
+    const shown = filtered.slice(0, dkLimit);
     const editing = cc.editId ? cardMap.get(cc.editId) : undefined;
+    const ccImgsQ = ccImgs('imgsQ');
+    const ccImgsA = ccImgs('imgsA');
     return {
       dk,
       dkCards: shown.map((c, i) => {
         const tag = stateTag(c);
         return {
-          n: String(i + 1).padStart(2, '0'), q: c.frente, a: c.verso, state: tag,
-          tb: STATE_TAGS[tag][0], tc: STATE_TAGS[tag][1],
+          n: String(i + 1).padStart(2, '0'),
+          q: c.frente || (c.imgsFrente?.length ? '(imagem)' : ''), a: c.verso || (c.imgsVerso?.length ? '(imagem)' : ''),
+          state: tag, tb: STATE_TAGS[tag][0], tc: STATE_TAGS[tag][1],
           next: c.suspenso ? '—' : c.state === State.New ? 'novo' : nextDueLabel(c.due, now),
+          nImg: (c.imgsFrente?.length ?? 0) + (c.imgsVerso?.length ?? 0),
           edit: () => editCard(c),
         };
       }),
-      dkShown: shown.length, dkNoResults: !!q && !filtered.length, search,
-      onSearch: (e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value),
+      dkShown: fmtNum(shown.length), dkMatch: fmtNum(filtered.length), dkNoResults: !!q && !filtered.length, search,
+      dkHasMore: filtered.length > shown.length,
+      dkMore: () => setDkLimit((n) => n + DK_PAGE),
+      onSearch: (e: ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+        setDkLimit(DK_PAGE);
+      },
+      exportDeck: () => {
+        if (!found) return;
+        void safely(async () => {
+          const file = await buildDeckFile(db, [found.id]);
+          const slug = norm(found.nome).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          downloadJson(`baralho-${slug || 'flashcards'}.json`, file);
+          toast('ok', `“${found.nome}” exportado. O arquivo pode ser importado em outro dispositivo.`);
+        });
+      },
       editDeck: () => {
         if (!found) return;
         const d = deckById.get(found.id)!;
@@ -419,7 +553,19 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
         });
         setModal('confirm');
       },
-      cc, ccErrQ: cc.tried && !cc.q.trim(), ccErrA: cc.tried && !cc.a.trim(),
+      cc, ccErrQ: cc.tried && !ccHasQ, ccErrA: cc.tried && !ccHasA,
+      ccImgsQ, ccImgsA, ccHasImgsQ: ccImgsQ.length > 0, ccHasImgsA: ccImgsA.length > 0,
+      addImgQ: () => void pickFiles('image/*').then((f) => attachImages('imgsQ', f)),
+      addImgA: () => void pickFiles('image/*').then((f) => attachImages('imgsA', f)),
+      onPasteQ: pasteInto('imgsQ'),
+      onPasteA: pasteInto('imgsA'),
+      onCcKey: (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+        void saveCard(!cc.editId);
+      },
+      ccKeyHint: isMobile ? '' : cc.editId ? 'Ctrl+Enter salva' : 'Ctrl+Enter salva e já abre outro',
+      ccPasteHint: isMobile ? '' : 'ou cole com Ctrl+V',
       ccHeader: cc.editId ? `editando card · ${deckById.get(editing?.deckId ?? '')?.nome ?? ''}` : `novo card · criados hoje ${created}/${cfg.metaCriados}`,
       ccTitleA: cc.editId ? 'Ajuste a' : 'Escreva uma',
       ccEditing: !!cc.editId,
@@ -427,8 +573,8 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
       ccSave2L: cc.editId ? 'Excluir card' : 'Salvar e escrever outro',
       ccSave2C: cc.editId ? '#A3303F' : '#4A4034',
       ccSuspL: editing?.suspenso ? 'card suspenso · reativar' : 'suspender este card',
-      ccPrevQ: cc.q.trim() || 'Sua pergunta aparece aqui', ccPrevQc: cc.q.trim() ? '#4A4034' : '#B5A88F',
-      ccPrevA: cc.a.trim() || 'e a resposta, depois de virar.', ccPrevAc: cc.a.trim() ? '#6E6250' : '#B5A88F',
+      ccPrevQ: cc.q.trim() || (cc.imgsQ.length ? '' : 'Sua pergunta aparece aqui'), ccPrevQc: cc.q.trim() ? '#4A4034' : '#B5A88F',
+      ccPrevA: cc.a.trim() || (cc.imgsA.length ? '' : 'e a resposta, depois de virar.'), ccPrevAc: cc.a.trim() ? '#6E6250' : '#B5A88F',
       ccTags: cc.tags.map((t) => ({ t, rm: () => setCC({ tags: cc.tags.filter((x) => x !== t) }) })),
       onCcQ: (e: ChangeEvent<HTMLTextAreaElement>) => setCC({ q: e.target.value }),
       onCcA: (e: ChangeEvent<HTMLTextAreaElement>) => setCC({ a: e.target.value }),
@@ -480,40 +626,95 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
     });
   };
 
-  const handleFile = async (file: File) => {
-    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
-      toast('err', 'Escolha um arquivo PDF.');
+  /** Pares prontos para a revisão: vale para PDF, texto colado e arquivos .txt/.csv. */
+  const reviewPairs = (result: ResultadoDeteccao) => {
+    const best = result.estrategias.find((e) => e.id === result.melhor)!;
+    if (!best.pares.length) {
+      setImp({ step: 'erro', erro: 'vazio', prog: 100 });
       return;
     }
-    impCancel.current = false;
-    setImpState({ ...EMPTY_IMP, step: 2, fileName: file.name, fileSize: file.size, deck: imp.deck || defaultDeck() });
-    try {
-      const { extractText } = await import('../pdf/extract');
-      const { paginas } = await extractText(
-        file,
-        (done, pages) => setImp({ done, pages, prog: Math.round((done / pages) * 70) }),
-        () => impCancel.current,
-      );
-      setImp({ prog: 85 });
-      const result = detectCards(paginas);
-      const best = result.estrategias.find((e) => e.id === result.melhor)!;
-      if (!best.pares.length) {
-        setImp({ step: 'erro', erro: 'vazio', prog: 100 });
-        return;
-      }
-      setImp({ step: 3, prog: 100, result, strat: result.melhor, items: itemsFrom(result, result.melhor) });
-    } catch (e) {
-      const tipo = (e as { tipo?: string }).tipo;
-      if (tipo === 'cancelado') setImpState({ ...EMPTY_IMP, deck: imp.deck });
-      else setImp({ step: 'erro', erro: tipo === 'senha' || tipo === 'escaneado' ? tipo : 'invalido' });
+    setImp({ step: 3, prog: 100, result, strat: result.melhor, items: itemsFrom(result, result.melhor) });
+  };
+
+  const fromText = (text: string, fileName: string): ResultadoDeteccao => {
+    const cols = textToPairs(text, fileName);
+    if (cols?.length) {
+      return { estrategias: [{ id: 'csv', label: 'Colunas do arquivo', pares: cols, descartadas: 0, confianca: 1 }], melhor: 'csv' };
     }
+    return detectCards(paginasDeTexto(text.replace(/\r\n?/g, '\n')));
+  };
+
+  const kindOfFile = (f: File): ImpKind | null => {
+    const n = f.name.toLowerCase();
+    if (n.endsWith('.pdf') || f.type === 'application/pdf') return 'pdf';
+    if (n.endsWith('.apkg') || n.endsWith('.colpkg')) return 'anki';
+    if (n.endsWith('.json')) return 'json';
+    if (/\.(txt|csv|tsv|text)$/.test(n) || f.type.startsWith('text/')) return 'texto';
+    return null;
+  };
+
+  const handleFile = async (file: File) => {
+    const kind = kindOfFile(file);
+    impCancel.current = false;
+    const base = { ...EMPTY_IMP, step: 2 as const, kind: kind ?? 'pdf', fileName: file.name, fileSize: file.size, deck: imp.deck || defaultDeck() };
+    if (!kind) {
+      setImpState({ ...base, step: 'erro', erro: 'formato' });
+      return;
+    }
+    setImpState(base);
+    try {
+      if (kind === 'pdf') {
+        const { extractText } = await import('../pdf/extract');
+        const { paginas } = await extractText(
+          file,
+          (done, pages) => setImp({ done, pages, prog: Math.round((done / pages) * 70) }),
+          () => impCancel.current,
+        );
+        setImp({ prog: 85 });
+        reviewPairs(detectCards(paginas));
+      } else if (kind === 'texto') {
+        reviewPairs(fromText(await file.text(), file.name));
+      } else {
+        let dk: ResultadoImport;
+        if (kind === 'anki') {
+          setImp({ prog: 15 });
+          const [{ parseApkg }, SQL] = await Promise.all([import('../importers/anki'), loadSql()]);
+          setImp({ prog: 45 });
+          dk = await parseApkg(await file.arrayBuffer(), SQL);
+        } else {
+          dk = parseDeckFile(JSON.parse(await file.text()));
+        }
+        if (impCancel.current) return;
+        if (!dk.baralhos.some((b) => b.cards.length)) {
+          setImp({ step: 'erro', erro: 'vazio', prog: 100 });
+          return;
+        }
+        setImp({ step: 'dk', prog: 100, dk, dkOn: dk.baralhos.map(() => true) });
+      }
+    } catch (e) {
+      console.error(e);
+      const tipo = (e as { tipo?: string }).tipo;
+      if (tipo === 'cancelado' || impCancel.current) setImpState({ ...EMPTY_IMP, deck: imp.deck });
+      else if (tipo === 'senha' || tipo === 'escaneado') setImp({ step: 'erro', erro: tipo });
+      else setImp({ step: 'erro', erro: kind === 'anki' ? 'anki' : kind === 'json' ? 'json' : 'invalido' });
+    }
+  };
+
+  const importPasted = () => {
+    const text = imp.paste.trim();
+    if (!text) {
+      toast('err', 'Cole algum texto primeiro.');
+      return;
+    }
+    setImpState({ ...EMPTY_IMP, step: 2, kind: 'texto', fileName: 'Texto colado', deck: imp.deck || defaultDeck() });
+    reviewPairs(fromText(text, ''));
   };
 
   const setItem = (id: number, patch: Partial<ImpItem>) =>
     setImpState((s) => ({ ...s, items: s.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }));
 
   const impVals = () => {
-    const stepN = imp.step === 'erro' ? 2 : imp.step;
+    const stepN = imp.step === 'erro' ? 2 : imp.step === 'dk' ? 3 : imp.step;
     const impSteps = ['ENVIAR', 'PROCESSANDO', 'REVISAR'].map((l, i) => {
       const n = i + 1;
       const done = stepN > n;
@@ -525,18 +726,63 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
         cb: done ? '#7FA886' : act ? (err ? '#C9485B' : '#D98CAE') : '#F6EFE0', cc: done || act ? '#FFF' : '#8A7C68', tc: act || done ? '#4A4034' : '#8A7C68',
       };
     });
-    const msgs = ['Lendo seu material', 'Identificando possíveis perguntas', 'Montando seus cards'];
-    const mi = imp.prog < 70 ? 0 : imp.prog < 90 ? 1 : 2;
+    const msgs = imp.kind === 'anki'
+      ? ['Abrindo o pacote do Anki', 'Lendo baralhos e cards', 'Separando as imagens']
+      : ['Lendo seu material', 'Identificando possíveis perguntas', 'Montando seus cards'];
+    const mi = imp.kind === 'anki' ? (imp.prog < 40 ? 0 : 1) : imp.prog < 70 ? 0 : imp.prog < 90 ? 1 : 2;
+    const dk = imp.dk;
+    const dkSel = dk ? dk.baralhos.filter((_, i) => imp.dkOn[i]) : [];
+    const dkSelCards = dkSel.reduce((a, b) => a + b.cards.length, 0);
+    const dkTotal = dk ? dk.baralhos.reduce((a, b) => a + b.cards.length, 0) : 0;
+    const imgsOf = (b: { cards: { imgsFrente: string[]; imgsVerso: string[] }[] }) =>
+      new Set(b.cards.flatMap((c) => [...c.imgsFrente, ...c.imgsVerso]).filter((k) => dk?.media.has(k))).size;
+    const multi = imp.doneDecks.length > 1;
     const cur = imp.result?.estrategias.find((e) => e.id === imp.strat);
     const best = imp.result?.estrategias.find((e) => e.id === imp.result?.melhor);
     const sel = imp.items.filter((x) => x.on).length;
     const allOn = imp.items.length > 0 && sel === imp.items.length;
     const dups = imp.items.filter((x) => x.dup).length;
     const erro = IMP_ERRORS[imp.erro ?? 'invalido'];
-    const deckNome = deckById.get(imp.deck)?.nome ?? imp.fileName.replace(/\.pdf$/i, '');
+    const deckNome = deckById.get(imp.deck)?.nome ?? imp.fileName.replace(/\.[a-z0-9]+$/i, '');
     return {
       imp, impSteps,
       imp1: imp.step === 1, imp2: imp.step === 2, imp3: imp.step === 3, imp4: imp.step === 4, impErr: imp.step === 'erro',
+      impDk: imp.step === 'dk',
+      impPasteOpen: imp.pasteOpen, impPaste: imp.paste,
+      togglePaste: () => setImp({ pasteOpen: !imp.pasteOpen }),
+      onImpPaste: (e: ChangeEvent<HTMLTextAreaElement>) => setImp({ paste: e.target.value }),
+      importPasted,
+      impFileTag: { pdf: 'PDF', texto: 'TXT', anki: 'ANKI', json: 'JSON' }[imp.kind],
+      impPageLabel: imp.kind === 'pdf' ? `página ${imp.done || 1} de ${imp.pages || '…'}` : '',
+      impDkTotal: fmtNum(dkTotal),
+      impDkN: `${dk?.baralhos.length ?? 0} ${plural(dk?.baralhos.length ?? 0, 'baralho', 'baralhos')}`,
+      impDkImgs: dk?.media.size ? `${fmtNum(dk.media.size)} ${plural(dk.media.size, 'imagem', 'imagens')}` : 'sem imagens',
+      impDkList: (dk?.baralhos ?? []).map((b, i) => {
+        const on = imp.dkOn[i];
+        const n = imgsOf(b);
+        return {
+          nome: b.nome, dot: deckColor(b.cor ?? i).dot, op: on ? 1 : 0.55,
+          info: `${fmtNum(b.cards.length)} cards${n ? ` · ${fmtNum(n)} ${plural(n, 'imagem', 'imagens')}` : ''}`,
+          exemplo: b.cards[0] ? `${b.cards[0].frente || '(imagem)'} → ${b.cards[0].verso || '(imagem)'}` : '',
+          cbBg: on ? '#4F7358' : '#FDFBF5', cbBd: on ? '#4F7358' : '#D8CCB3', cbSym: on ? '✓' : '',
+          toggle: () => setImp({ dkOn: imp.dkOn.map((x, j) => (j === i ? !x : x)) }),
+        };
+      }),
+      impDkSelLabel: `${fmtNum(dkSelCards)} cards em ${dkSel.length} ${plural(dkSel.length, 'baralho', 'baralhos')}`,
+      addImportDecks: () =>
+        void safely(async () => {
+          if (!dk || !dkSel.length) {
+            toast('err', 'Marque pelo menos um baralho.');
+            return;
+          }
+          const r = await repo.importDecks(db, dkSel, dk.media, imp.kind === 'anki' ? 'anki' : 'arquivo', Date.now());
+          setImp({ step: 4, added: r.cards, doneDecks: r.decks, deck: r.decks[0] ?? '' });
+          mainRef.current?.scrollTo({ top: 0 });
+        }),
+      impDoneMsg: multi
+        ? `Eles entram como novos em ${imp.doneDecks.length} baralhos e aparecem aos poucos nas próximas sessões.`
+        : `Eles entram como novos em ${deckNome} e aparecem aos poucos nas próximas sessões.`,
+      impDoneBtn: multi ? 'Ver baralhos' : 'Ver baralho',
       dropBd: imp.drag ? '#B03D66' : '#D98CAE', dropBg: imp.drag ? '#F4D9E3' : '#FAEBF0',
       onDragOver: (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -549,15 +795,17 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
         const f = e.dataTransfer.files[0];
         if (f) void handleFile(f);
       },
-      startImport: () => void pickFile('application/pdf,.pdf').then((f) => f && handleFile(f)),
+      startImport: () => void pickFile('.pdf,.apkg,.colpkg,.csv,.tsv,.txt,.json,application/pdf,text/plain,text/csv').then((f) => f && handleFile(f)),
       cancelImport: () => {
         impCancel.current = true;
         setImpState({ ...EMPTY_IMP, deck: imp.deck });
       },
       restartImport: () => setImpState({ ...EMPTY_IMP, deck: imp.deck }),
       impFileName: imp.fileName,
-      impFileMeta: `${imp.pages ? `${imp.pages} ${plural(imp.pages, 'página', 'páginas')} · ` : ''}${(imp.fileSize / 1_048_576).toFixed(1).replace('.', ',')} MB`,
-      impMsg: msgs[mi], impProgW: `${imp.prog}%`, impPage: imp.done || 1, impPages: imp.pages || '…',
+      impFileMeta: imp.fileSize
+        ? `${imp.pages ? `${imp.pages} ${plural(imp.pages, 'página', 'páginas')} · ` : ''}${(imp.fileSize / 1_048_576).toFixed(1).replace('.', ',')} MB`
+        : 'colado aqui',
+      impMsg: msgs[mi], impProgW: `${imp.prog}%`,
       impChecks: msgs.map((l, i) => ({
         l, sym: i < mi ? '✓' : '', col: i <= mi ? '#4A4034' : '#B5A88F',
         bg: i < mi ? '#7FA886' : 'transparent', bd: i < mi ? 'none' : i === mi ? '2px solid #D98CAE' : '1.5px dashed #E3D9C4',
@@ -599,11 +847,11 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
           }
           let deck = activeIds.has(imp.deck) ? imp.deck : '';
           if (!deck) deck = await repo.createDeck(db, deckNome || 'Importados', '', activeDecks.length % DECK_COLORS.length, Date.now());
-          await repo.addCards(db, deck, chosen.map((x) => ({ frente: x.q, verso: x.a })), 'pdf', Date.now());
-          setImp({ step: 4, added: chosen.length, deck });
+          await repo.addCards(db, deck, chosen.map((x) => ({ frente: x.q, verso: x.a })), imp.kind === 'pdf' ? 'pdf' : 'arquivo', Date.now());
+          setImp({ step: 4, added: chosen.length, deck, doneDecks: [deck] });
           mainRef.current?.scrollTo({ top: 0 });
         }),
-      goImpDeck: () => go('baralho', { deckId: imp.deck }),
+      goImpDeck: () => (multi ? go('baralhos') : go('baralho', { deckId: imp.deck })),
     };
   };
 
@@ -674,7 +922,7 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
     steppers: (
       [
         ['metaRespondidos', 'Cards respondidos por dia', 'sua meta diária', 5, 5, 200],
-        ['limiteNovosPorDia', 'Novos cards por dia', 'limite de cards novos na fila', 5, 0, 100],
+        ['limiteNovosPorDia', 'Novos cards por dia', 'limite de cards novos na fila', 5, 0, 500],
         ['metaCriados', 'Cards criados por dia', 'meta de escrita', 1, 0, 30],
       ] as const
     ).map(([key, l, d, step, min, max]) => ({
@@ -710,6 +958,7 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
         await repo.updateDeck(db, d.id, { arquivado: false });
         toast('ok', `“${d.nome}” voltou para os baralhos.`);
       }),
+      remove: () => askDeleteDeck(d.id, d.nome, stats.get(d.id)?.total ?? 0),
     })),
   });
 
@@ -855,6 +1104,11 @@ export function useApp(data: st.Snapshot, storageOk: boolean, aviso: string | nu
 
     // modais
     modalNb: modal === 'novoBaralho', modalBackup: modal === 'backup', modalConfirm: modal === 'confirm' && !!confirm, modalLemb: modal === 'lembrete',
+    modalImg: modal === 'img' && !!imgFull, imgFull,
+    nbEditing: !!nb.editId,
+    deleteDeckAsk: () => {
+      if (nb.editId) askDeleteDeck(nb.editId, deckById.get(nb.editId)?.nome ?? nb.name, editingDeckTotal);
+    },
     closeModal: () => setModal(null),
     stop: (e: ReactMouseEvent) => e.stopPropagation(),
     nb, nbC, nbErr, nbBd: nbErr ? '#C9485B' : '#E3D9C4',

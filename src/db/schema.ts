@@ -18,9 +18,19 @@ export interface CardRow extends SchedFields {
   frente: string;
   verso: string;
   tags: string[];
-  origem: 'manual' | 'pdf';
+  origem: 'manual' | 'pdf' | 'anki' | 'arquivo';
   criadoEm: number;
   suspenso: boolean;
+  /** Ids na tabela media. Ausente em cards antigos = sem imagens. */
+  imgsFrente?: string[];
+  imgsVerso?: string[];
+}
+
+export interface Media {
+  id: string;
+  blob: Blob;
+  mime: string;
+  criadoEm: number;
 }
 
 /** Um registro por avaliação. Nunca editado nem apagado: é a fonte dos gráficos. */
@@ -69,6 +79,7 @@ export class FlashcardsDB extends Dexie {
   reviews!: Table<Review, number>;
   dias!: Table<Dia, string>;
   config!: Table<Config, string>;
+  media!: Table<Media, string>;
 
   constructor(name = 'flashcards-dani') {
     super(name);
@@ -79,6 +90,7 @@ export class FlashcardsDB extends Dexie {
       dias: 'data',
       config: 'id',
     });
+    this.version(2).stores({ media: 'id' });
   }
 }
 

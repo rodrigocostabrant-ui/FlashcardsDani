@@ -278,11 +278,21 @@
       <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A7C68">{{sCard.kind}}</span>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;text-align:center">
-      <p style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(24px,4.2cqi,34px);line-height:1.25;letter-spacing:-.01em;text-wrap:balance">{{sCard.q}}</p>
+      <sc-if value="{{sCard.q}}"><p style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(24px,4.2cqi,34px);line-height:1.25;letter-spacing:-.01em;text-wrap:balance;white-space:pre-line">{{sCard.q}}</p></sc-if>
+      <sc-if value="{{sHasImgsQ}}">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+          <sc-for list="{{sImgsQ}}" as="im"><img src="{{im.url}}" sc-camel-on-click="{{im.open}}" alt="Imagem da pergunta" title="Ampliar" style="max-width:100%;max-height:clamp(170px,36cqi,320px);border-radius:14px;border:1px solid #E3D9C4;background:#FFF;cursor:zoom-in;object-fit:contain"></sc-for>
+        </div>
+      </sc-if>
       <sc-if value="{{revealed}}">
         <div style="display:flex;flex-direction:column;gap:16px;animation:fadeUp .3s ease both">
           <div style="display:flex;align-items:center;gap:10px"><span style="flex:1;border-top:1.5px dashed #E3D9C4"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A8436E">RESPOSTA</span><span style="flex:1;border-top:1.5px dashed #E3D9C4"></span></div>
-          <p style="margin:0;font-size:clamp(17px,2.8cqi,21px);line-height:1.55;text-wrap:pretty"><span style="background:linear-gradient(transparent 58%,rgba(243,227,181,.9) 58%);padding:0 2px">{{sCard.a}}</span></p>
+          <sc-if value="{{sCard.a}}"><p style="margin:0;font-size:clamp(17px,2.8cqi,21px);line-height:1.55;text-wrap:pretty;white-space:pre-line"><span style="background:linear-gradient(transparent 58%,rgba(243,227,181,.9) 58%);padding:0 2px">{{sCard.a}}</span></p></sc-if>
+          <sc-if value="{{sHasImgsA}}">
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+              <sc-for list="{{sImgsA}}" as="im"><img src="{{im.url}}" sc-camel-on-click="{{im.open}}" alt="Imagem da resposta" title="Ampliar" style="max-width:100%;max-height:clamp(170px,36cqi,320px);border-radius:14px;border:1px solid #E3D9C4;background:#FFF;cursor:zoom-in;object-fit:contain"></sc-for>
+            </div>
+          </sc-if>
         </div>
       </sc-if>
     </div>
@@ -376,7 +386,7 @@
       <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Suas <span style="font-style:italic;color:#4F7358">fichas.</span></h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">
-      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#DCEBD9">Importar PDF</button>
+      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#DCEBD9">Importar</button>
       <button sc-camel-on-click="{{openNovoBaralho}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">+ Novo baralho</button>
     </div>
   </div>
@@ -420,11 +430,12 @@
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:{{dk.ink}}">último estudo: {{dk.ultimo}}</span>
       <div style="display:flex;gap:14px;margin-top:4px">
         <button sc-camel-on-click="{{editDeck}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{dk.ink}};text-decoration:underline">editar</button>
+        <button sc-camel-on-click="{{exportDeck}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{dk.ink}};text-decoration:underline">exportar</button>
         <button sc-camel-on-click="{{archiveDeck}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{dk.ink}};text-decoration:underline">arquivar</button>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">
-      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(74,64,52,.18);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#FDFBF5">Importar PDF</button>
+      <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(74,64,52,.18);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#FDFBF5">Importar</button>
       <button sc-camel-on-click="{{goCriar}}" style="height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(74,64,52,.18);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#FDFBF5">+ Novo card</button>
       <sc-if value="{{dk.hasDue}}"><button sc-camel-on-click="{{dk.study}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Estudar agora →</button></sc-if>
     </div>
@@ -442,7 +453,7 @@
       <p style="margin:0;max-width:380px;font-size:14.5px;line-height:1.5;color:#6E6250">Escreva o primeiro card à mão ou traga um resumo em PDF — você revisa tudo antes de salvar.</p>
       <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px">
         <button sc-camel-on-click="{{goCriar}}" style="height:46px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer">Escrever um card</button>
-        <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer">Importar PDF</button>
+        <button sc-camel-on-click="{{goImport}}" style="height:46px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer">Importar</button>
       </div>
     </div>
   </sc-if>
@@ -458,13 +469,15 @@
           <span style="flex:1 1 260px;min-width:0;font-family:'Fraunces',serif;font-size:17px;line-height:1.3">{{c.q}}</span>
           <span style="flex:1.2 1 260px;min-width:0;font-size:14px;color:#6E6250;line-height:1.45">{{c.a}}</span>
           <span style="display:flex;gap:8px;align-items:center;margin-left:auto">
+            <sc-if value="{{c.nImg}}"><span title="Imagens no card" style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid #E3D9C4;color:#8A7C68">▣ {{c.nImg}}</span></sc-if>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;padding:3px 9px;border-radius:999px;background:{{c.tb}};color:{{c.tc}}">{{c.state}}</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;min-width:72px;text-align:right">{{c.next}}</span>
           </span>
         </div>
       </sc-for>
       <sc-if value="{{dkNoResults}}"><div style="padding:30px 4px;border-top:1px solid #E3D9C4;font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:#8A7C68">Nenhum card com “{{search}}”.</div></sc-if>
-      <p style="margin:12px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">mostrando {{dkShown}} de {{dk.totalFmt}}</p>
+      <sc-if value="{{dkHasMore}}"><button sc-camel-on-click="{{dkMore}}" style="align-self:center;margin-top:14px;height:42px;padding:0 22px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#F6EFE0">Mostrar mais</button></sc-if>
+      <p style="margin:12px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">mostrando {{dkShown}} de {{dkMatch}}</p>
     </div>
   </sc-if>
 </div>
@@ -485,17 +498,37 @@
       <div style="padding:30px clamp(18px,4cqi,34px) 26px clamp(46px,8.5cqi,76px);display:flex;flex-direction:column;gap:18px">
         <div style="display:flex;flex-direction:column;gap:6px">
           <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A8436E">PERGUNTA · FRENTE</label>
-          <textarea value="{{cc.q}}" sc-camel-on-change="{{onCcQ}}" rows="3" placeholder="Ex.: Qual o antídoto da intoxicação por heparina?" style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-family:'Fraunces',serif;font-size:22px;padding:0;min-height:102px"></textarea>
-          <sc-if value="{{ccErrQ}}"><span style="font-size:12.5px;color:#A3303F">Escreva a pergunta antes de salvar.</span></sc-if>
+          <textarea value="{{cc.q}}" sc-camel-on-change="{{onCcQ}}" sc-camel-on-paste="{{onPasteQ}}" sc-camel-on-key-down="{{onCcKey}}" rows="3" placeholder="Ex.: Qual o antídoto da intoxicação por heparina?" style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-family:'Fraunces',serif;font-size:22px;padding:0;min-height:102px"></textarea>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <sc-for list="{{ccImgsQ}}" as="im">
+              <div style="position:relative;width:88px;height:66px;border-radius:10px;overflow:hidden;border:1px solid #E3D9C4;background:#FFF">
+                <img src="{{im.url}}" alt="" style="width:100%;height:100%;object-fit:cover">
+                <button sc-camel-on-click="{{im.rm}}" title="Remover imagem" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(74,64,52,.78);color:#FFF;font-size:13px;line-height:1;cursor:pointer">×</button>
+              </div>
+            </sc-for>
+            <button sc-camel-on-click="{{addImgQ}}" style="height:34px;padding:0 14px;border-radius:999px;border:1.5px dashed #D98CAE;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8436E;cursor:pointer" style-hover="background:#FAEBF0">+ imagem</button>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B5A88F">{{ccPasteHint}}</span>
+          </div>
+          <sc-if value="{{ccErrQ}}"><span style="font-size:12.5px;color:#A3303F">Escreva a pergunta ou coloque uma imagem antes de salvar.</span></sc-if>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#4F7358">RESPOSTA · VERSO</label>
-          <textarea value="{{cc.a}}" sc-camel-on-change="{{onCcA}}" rows="4" placeholder="Ex.: Sulfato de protamina." style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-size:17px;padding:0;min-height:136px"></textarea>
-          <sc-if value="{{ccErrA}}"><span style="font-size:12.5px;color:#A3303F">Falta a resposta.</span></sc-if>
+          <textarea value="{{cc.a}}" sc-camel-on-change="{{onCcA}}" sc-camel-on-paste="{{onPasteA}}" sc-camel-on-key-down="{{onCcKey}}" rows="4" placeholder="Ex.: Sulfato de protamina." style="width:100%;resize:vertical;border:none;outline:none;background:repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px);line-height:34px;font-size:17px;padding:0;min-height:136px"></textarea>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <sc-for list="{{ccImgsA}}" as="im">
+              <div style="position:relative;width:88px;height:66px;border-radius:10px;overflow:hidden;border:1px solid #E3D9C4;background:#FFF">
+                <img src="{{im.url}}" alt="" style="width:100%;height:100%;object-fit:cover">
+                <button sc-camel-on-click="{{im.rm}}" title="Remover imagem" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(74,64,52,.78);color:#FFF;font-size:13px;line-height:1;cursor:pointer">×</button>
+              </div>
+            </sc-for>
+            <button sc-camel-on-click="{{addImgA}}" style="height:34px;padding:0 14px;border-radius:999px;border:1.5px dashed #7FA886;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4F7358;cursor:pointer" style-hover="background:#EAF1E6">+ imagem</button>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B5A88F">{{ccPasteHint}}</span>
+          </div>
+          <sc-if value="{{ccErrA}}"><span style="font-size:12.5px;color:#A3303F">Falta a resposta (texto ou imagem).</span></sc-if>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:16px;padding-top:6px;border-top:1px dashed #E3D9C4">
           <div style="flex:1 1 200px;display:flex;flex-direction:column;gap:6px;padding-top:12px">
-            <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#8A7C68">BARALHO</label>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#8A7C68">BARALHO</label><button sc-camel-on-click="{{openNovoBaralho}}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#A8436E;text-decoration:underline">+ novo</button></div>
             <sc-raw-select value="{{cc.deck}}" sc-camel-on-change="{{onCcDeck}}" style="height:44px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:#F6EFE0;font-size:14px;font-weight:600;outline:none;cursor:pointer">
               <sc-for list="{{decksV}}" as="d"><option value="{{d.id}}">{{d.nome}}</option></sc-for>
             </sc-raw-select>
@@ -513,9 +546,11 @@
     <div style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:18px">
       <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">assim vai aparecer no estudo</div>
       <div style="padding:22px;border-radius:18px;background:#FDFBF5;border:1px solid #E3D9C4;display:flex;flex-direction:column;gap:12px;text-align:center">
-        <span style="font-family:'Fraunces',serif;font-size:18px;line-height:1.3;color:{{ccPrevQc}}">{{ccPrevQ}}</span>
+        <span style="font-family:'Fraunces',serif;font-size:18px;line-height:1.3;color:{{ccPrevQc}};white-space:pre-line">{{ccPrevQ}}</span>
+        <sc-if value="{{ccHasImgsQ}}"><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"><sc-for list="{{ccImgsQ}}" as="im"><img src="{{im.url}}" alt="" style="max-width:100%;max-height:120px;border-radius:8px"></sc-for></div></sc-if>
         <span style="border-top:1.5px dashed #E3D9C4"></span>
-        <span style="font-size:14px;line-height:1.5;color:{{ccPrevAc}}">{{ccPrevA}}</span>
+        <span style="font-size:14px;line-height:1.5;color:{{ccPrevAc}};white-space:pre-line">{{ccPrevA}}</span>
+        <sc-if value="{{ccHasImgsA}}"><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"><sc-for list="{{ccImgsA}}" as="im"><img src="{{im.url}}" alt="" style="max-width:100%;max-height:120px;border-radius:8px"></sc-for></div></sc-if>
       </div>
       <ul style="margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.45;color:#6E6250">
         <li>Uma ideia por card.</li>
@@ -525,6 +560,7 @@
       <div style="display:flex;flex-direction:column;gap:10px">
         <button sc-camel-on-click="{{saveCard}}" style="height:52px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258" style-active="transform:translateY(2px)">{{ccSaveL}}</button>
         <button sc-camel-on-click="{{saveCardAgain}}" style="height:46px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:14px;cursor:pointer;color:{{ccSave2C}}" style-hover="background:#F6EFE0">{{ccSave2L}}</button>
+        <span style="align-self:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B5A88F">{{ccKeyHint}}</span>
         <sc-if value="{{ccEditing}}"><button sc-camel-on-click="{{toggleSuspend}}" style="align-self:center;border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68;text-decoration:underline">{{ccSuspL}}</button></sc-if>
       </div>
     </div>
@@ -536,7 +572,7 @@
 <sc-if value="{{isImportar}}">
 <div style="display:flex;flex-direction:column;gap:28px;animation:fadeUp .35s ease both">
   <div style="display:flex;flex-direction:column;gap:12px">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">importar pdf</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A7C68">importar</div>
     <h1 style="font-family:'Fraunces',serif;font-weight:380;font-size:clamp(36px,6.4cqi,60px);line-height:1;letter-spacing:-.025em;margin:0">Do resumo para <span style="font-style:italic;color:#4F7358">os cards.</span></h1>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -556,11 +592,30 @@
         <div style="position:absolute;left:14px;right:18px;top:40px;display:flex;flex-direction:column;gap:7px"><i style="height:3px;background:#E3D9C4;border-radius:2px"></i><i style="height:3px;background:#E3D9C4;border-radius:2px;width:80%"></i><i style="height:3px;background:#F3E3B5;border-radius:2px"></i><i style="height:3px;background:#E3D9C4;border-radius:2px;width:60%"></i></div>
         <span style="position:absolute;left:-10px;bottom:14px;padding:3px 8px;border-radius:5px;background:#C9485B;color:#FFF;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em">PDF</span>
       </div>
-      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(26px,4.4cqi,36px)">Arraste seu PDF <span style="font-style:italic;color:#A8436E">aqui</span></h2>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">ou</span>
-      <button sc-camel-on-click="{{startImport}}" style="height:50px;padding:0 26px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Escolher arquivo</button>
-      <span style="font-size:13px;color:#8A7C68;max-width:380px;line-height:1.5">PDFs com texto selecionável. O arquivo é lido aqui mesmo, no seu dispositivo — nada é enviado.</span>
+      <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(26px,4.4cqi,36px)">Arraste seu arquivo <span style="font-style:italic;color:#A8436E">aqui</span></h2>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">PDF</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">ANKI .APKG</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">PLANILHA .CSV</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">TEXTO .TXT</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:#FDFBF5;border:1px solid #E3D9C4">BARALHO .JSON</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+        <button sc-camel-on-click="{{startImport}}" style="height:50px;padding:0 26px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Escolher arquivo</button>
+        <button sc-camel-on-click="{{togglePaste}}" style="height:50px;padding:0 22px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:600;font-size:15px;cursor:pointer" style-hover="background:#F6EFE0">Colar texto</button>
+      </div>
+      <span style="font-size:13px;color:#8A7C68;max-width:440px;line-height:1.5">Baralhos do Anki vêm com imagens; do Quizlet, exporte como texto. O arquivo é lido aqui mesmo, no seu dispositivo — nada é enviado.</span>
     </div>
+    <sc-if value="{{impPasteOpen}}">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:22px;background:#FDFBF5;border:1px solid #E3D9C4;animation:fadeUp .25s ease both">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A8436E">COLE SEUS CARDS</label>
+        <textarea value="{{impPaste}}" sc-camel-on-change="{{onImpPaste}}" rows="8" placeholder="Uma pergunta e resposta por linha, separadas por tab, “—” ou “|”. Também funciona com P: / R:, listas numeradas e blocos separados por linha em branco." style="width:100%;resize:vertical;padding:14px 16px;border-radius:14px;border:1px solid #E3D9C4;background:#F6EFE0;font-size:14.5px;line-height:1.5;outline:none"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+          <button sc-camel-on-click="{{togglePaste}}" style="height:44px;padding:0 18px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
+          <button sc-camel-on-click="{{importPasted}}" style="height:44px;padding:0 22px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Montar cards</button>
+        </div>
+      </div>
+    </sc-if>
     <div style="display:flex;flex-wrap:wrap;gap:28px">
       <div style="flex:2 1 380px;display:flex;flex-direction:column;gap:10px">
         <h3 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:21px">Como a gente acha as <span style="font-style:italic">perguntas</span></h3>
@@ -583,7 +638,7 @@
   <sc-if value="{{imp2}}">
     <div style="display:flex;flex-direction:column;gap:26px;padding:clamp(24px,5cqi,48px);border-radius:28px;background:#FDFBF5;border:1px solid #E3D9C4">
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <span style="padding:6px 10px;border-radius:6px;background:#C9485B;color:#FFF;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em">PDF</span>
+        <span style="padding:6px 10px;border-radius:6px;background:#C9485B;color:#FFF;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em">{{impFileTag}}</span>
         <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{impFileName}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{impFileMeta}}</span></div>
         <button sc-camel-on-click="{{cancelImport}}" style="height:38px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F6EFE0">Cancelar</button>
       </div>
@@ -593,7 +648,7 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="height:12px;border-radius:999px;background:#F6EFE0;overflow:hidden;box-shadow:inset 0 0 0 1px #E3D9C4"><div style="height:100%;width:{{impProgW}};border-radius:999px;background-color:#D98CAE;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.35) 0 6px,transparent 6px 12px);transition:width .15s linear"></div></div>
-        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68"><span>página {{impPage}} de {{impPages}}</span><span>{{impProgW}}</span></div>
+        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68"><span>{{impPageLabel}}</span><span>{{impProgW}}</span></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <sc-for list="{{impChecks}}" as="c" hint-placeholder-count="3">
@@ -671,14 +726,41 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{impDk}}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-family:'Fraunces',serif;font-size:clamp(30px,5cqi,42px);line-height:1"><span style="font-style:italic;color:#A8436E">{{impDkTotal}}</span> cards em {{impDkN}}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#8A7C68">{{impFileName}} · {{impDkImgs}}</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 18px;border-radius:16px;background:#E4E8D6;font-size:14px;line-height:1.5;color:#55643F"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding-top:2px">i</span>Cada baralho entra como um baralho novo aqui, com os cards como novos: o progresso do app de origem não vem junto. Depois você edita, junta ou apaga o que quiser.</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{impDkList}}" as="d">
+          <div style="display:flex;gap:14px;align-items:center;padding:16px;border-radius:18px;background:#FDFBF5;border:1px solid #E3D9C4;opacity:{{d.op}};transition:opacity .2s">
+            <button sc-camel-on-click="{{d.toggle}}" title="Incluir" style="width:26px;height:26px;flex:none;border-radius:8px;border:1.5px solid {{d.cbBd}};background:{{d.cbBg}};color:#FFF;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">{{d.cbSym}}</button>
+            <span style="width:14px;height:18px;border-radius:3px;flex:none;background:{{d.dot}}"></span>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font-family:'Fraunces',serif;font-size:19px;line-height:1.2">{{d.nome}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{d.info}}</span>
+            </div>
+            <span style="flex:1 1 200px;min-width:0;font-size:13px;color:#6E6250;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{d.exemplo}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:sticky;bottom:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 12px 12px 22px;border-radius:999px;background:#4A4034;color:#FDFBF5;box-shadow:0 12px 30px -10px rgba(74,64,52,.5)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{impDkSelLabel}}</span>
+        <button sc-camel-on-click="{{addImportDecks}}" style="height:46px;padding:0 24px;border-radius:999px;border:none;background:#F4D9E3;color:#4A4034;font-weight:700;font-size:14.5px;cursor:pointer" style-hover="background:#FAEBF0">Importar baralhos</button>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{imp4}}">
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(28px,5cqi,48px);border-radius:28px;background-color:#DCEBD9;background-image:radial-gradient(rgba(62,107,74,.14) 1.2px,transparent 1.7px);background-size:14px 14px;position:relative;overflow:hidden">
       <div style="width:64px;height:64px;border-radius:50%;background:#FDFBF5;border:2px solid #4F7358;display:flex;align-items:center;justify-content:center;font-size:28px;color:#4F7358;animation:pop .5s ease both">✓</div>
       <h2 style="margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:clamp(28px,5cqi,40px)">{{impAdded}} cards <span style="font-style:italic;color:#3E6B4A">no lugar certo.</span></h2>
-      <p style="margin:0;font-size:15px;color:#3E6B4A">Eles entram como novos em {{impDeckName}} e aparecem aos poucos nas próximas sessões.</p>
+      <p style="margin:0;font-size:15px;color:#3E6B4A">{{impDoneMsg}}</p>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
-        <button sc-camel-on-click="{{goImpDeck}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer">Ver baralho</button>
-        <button sc-camel-on-click="{{restartImport}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(62,107,74,.3);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer">Importar outro PDF</button>
+        <button sc-camel-on-click="{{goImpDeck}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer">{{impDoneBtn}}</button>
+        <button sc-camel-on-click="{{restartImport}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(62,107,74,.3);background:rgba(253,251,245,.7);font-weight:600;font-size:14px;cursor:pointer">Importar outro arquivo</button>
       </div>
     </div>
   </sc-if>
@@ -852,6 +934,7 @@
         <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px dashed #E3D9C4">
           <span style="width:14px;height:18px;border-radius:3px;flex:none;background:{{d.dot}}"></span>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-family:'Fraunces',serif;font-size:18px">{{d.nome}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{d.totalFmt}} cards</span></div>
+          <button sc-camel-on-click="{{d.remove}}" style="height:36px;padding:0 14px;border-radius:999px;border:none;background:transparent;font-weight:600;font-size:13px;color:#A3303F;cursor:pointer" style-hover="background:#F6D8D8">Excluir</button>
           <button sc-camel-on-click="{{d.restore}}" style="height:36px;padding:0 16px;border-radius:999px;border:1px solid #E3D9C4;background:#FDFBF5;font-weight:700;font-size:13px;cursor:pointer" style-hover="background:#DCEBD9">Restaurar</button>
         </div>
       </sc-for>
@@ -896,6 +979,7 @@
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-family:'Fraunces',serif;font-size:19px;color:{{nbPrevC}}">{{nbPrev}}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A7C68">{{nbPrevSub}}</span></div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <sc-if value="{{nbEditing}}"><button sc-camel-on-click="{{deleteDeckAsk}}" style="height:48px;padding:0 16px;border-radius:999px;border:none;background:transparent;font-weight:600;font-size:14px;color:#A3303F;cursor:pointer;margin-right:auto" style-hover="background:#F6D8D8">Excluir baralho</button></sc-if>
         <button sc-camel-on-click="{{closeModal}}" style="height:48px;padding:0 20px;border-radius:999px;border:1px solid #E3D9C4;background:transparent;font-weight:600;font-size:14px;cursor:pointer">Cancelar</button>
         <button sc-camel-on-click="{{createDeck}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">{{nbBtn}}</button>
       </div>
@@ -942,6 +1026,11 @@
         <button sc-camel-on-click="{{saveLembrete}}" style="height:48px;padding:0 24px;border-radius:999px;border:none;background:#B03D66;color:#FFF8F3;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8C2F51" style-hover="background:#9A3258">Salvar</button>
       </div>
     </div>
+  </div>
+</sc-if>
+<sc-if value="{{modalImg}}">
+  <div sc-camel-on-click="{{closeModal}}" title="Fechar" style="position:absolute;inset:0;z-index:25;background:rgba(46,40,34,.82);display:flex;align-items:center;justify-content:center;padding:clamp(12px,4vw,40px);cursor:zoom-out;animation:fadeUp .2s ease both">
+    <img src="{{imgFull}}" alt="Imagem ampliada" style="max-width:100%;max-height:100%;border-radius:14px;background:#FFF;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);object-fit:contain">
   </div>
 </sc-if>
 <sc-if value="{{hasToast}}">

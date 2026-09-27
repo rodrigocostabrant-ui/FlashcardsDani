@@ -7,7 +7,7 @@ export function ImportarScreen({ v }: { v: VM }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "28px", animation: "fadeUp .35s ease both" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", letterSpacing: ".12em", textTransform: "uppercase", color: "#8A7C68" }}>
-          importar pdf
+          importar
         </div>
         <h1 style={{ fontFamily: "'Fraunces',serif", fontWeight: "380", fontSize: "clamp(36px,6.4cqi,60px)", lineHeight: "1", letterSpacing: "-.025em", margin: "0" }}>
           {"Do resumo para "}
@@ -47,21 +47,56 @@ export function ImportarScreen({ v }: { v: VM }) {
               </span>
             </div>
             <h2 style={{ margin: "0", fontFamily: "'Fraunces',serif", fontWeight: "400", fontSize: "clamp(26px,4.4cqi,36px)" }}>
-              {"Arraste seu PDF "}
+              {"Arraste seu arquivo "}
               <span style={{ fontStyle: "italic", color: "#A8436E" }}>
                 aqui
               </span>
             </h2>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68" }}>
-              ou
-            </span>
-            <button className="dh14" onClick={v.startImport} style={{ height: "50px", padding: "0 26px", borderRadius: "999px", border: "none", background: "#B03D66", color: "#FFF8F3", fontWeight: "700", fontSize: "15px", cursor: "pointer", boxShadow: "0 3px 0 #8C2F51" }}>
-              Escolher arquivo
-            </button>
-            <span style={{ fontSize: "13px", color: "#8A7C68", maxWidth: "380px", lineHeight: "1.5" }}>
-              PDFs com texto selecionável. O arquivo é lido aqui mesmo, no seu dispositivo — nada é enviado.
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".08em", padding: "4px 10px", borderRadius: "999px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
+                PDF
+              </span>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".08em", padding: "4px 10px", borderRadius: "999px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
+                ANKI .APKG
+              </span>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".08em", padding: "4px 10px", borderRadius: "999px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
+                PLANILHA .CSV
+              </span>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".08em", padding: "4px 10px", borderRadius: "999px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
+                TEXTO .TXT
+              </span>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".08em", padding: "4px 10px", borderRadius: "999px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
+                BARALHO .JSON
+              </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+              <button className="dh14" onClick={v.startImport} style={{ height: "50px", padding: "0 26px", borderRadius: "999px", border: "none", background: "#B03D66", color: "#FFF8F3", fontWeight: "700", fontSize: "15px", cursor: "pointer", boxShadow: "0 3px 0 #8C2F51" }}>
+                Escolher arquivo
+              </button>
+              <button className="dh1" onClick={v.togglePaste} style={{ height: "50px", padding: "0 22px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "15px", cursor: "pointer" }}>
+                Colar texto
+              </button>
+            </div>
+            <span style={{ fontSize: "13px", color: "#8A7C68", maxWidth: "440px", lineHeight: "1.5" }}>
+              Baralhos do Anki vêm com imagens; do Quizlet, exporte como texto. O arquivo é lido aqui mesmo, no seu dispositivo — nada é enviado.
             </span>
           </div>
+          {!!(v.impPasteOpen) && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "22px", borderRadius: "22px", background: "#FDFBF5", border: "1px solid #E3D9C4", animation: "fadeUp .25s ease both" }}>
+                <label style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".14em", color: "#A8436E" }}>
+                  COLE SEUS CARDS
+                </label>
+                <textarea value={v.impPaste} onChange={v.onImpPaste} rows={8} placeholder="Uma pergunta e resposta por linha, separadas por tab, “—” ou “|”. Também funciona com P: / R:, listas numeradas e blocos separados por linha em branco." style={{ width: "100%", resize: "vertical", padding: "14px 16px", borderRadius: "14px", border: "1px solid #E3D9C4", background: "#F6EFE0", fontSize: "14.5px", lineHeight: "1.5", outline: "none" }} />
+                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
+                  <button onClick={v.togglePaste} style={{ height: "44px", padding: "0 18px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "transparent", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button className="dh14" onClick={v.importPasted} style={{ height: "44px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#B03D66", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 3px 0 #8C2F51" }}>
+                    Montar cards
+                  </button>
+                </div>
+              </div>
+          )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "28px" }}>
             <div style={{ flex: "2 1 380px", display: "flex", flexDirection: "column", gap: "10px" }}>
               <h3 style={{ margin: "0", fontFamily: "'Fraunces',serif", fontWeight: "400", fontSize: "21px" }}>
@@ -124,7 +159,7 @@ export function ImportarScreen({ v }: { v: VM }) {
           <div style={{ display: "flex", flexDirection: "column", gap: "26px", padding: "clamp(24px,5cqi,48px)", borderRadius: "28px", background: "#FDFBF5", border: "1px solid #E3D9C4" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
               <span style={{ padding: "6px 10px", borderRadius: "6px", background: "#C9485B", color: "#FFF", fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".1em" }}>
-                PDF
+                {v.impFileTag}
               </span>
               <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: "1", minWidth: "0" }}>
                 <span style={{ fontWeight: "700", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -158,10 +193,7 @@ export function ImportarScreen({ v }: { v: VM }) {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68" }}>
                 <span>
-                  {"página "}
-                  {v.impPage}
-                  {" de "}
-                  {v.impPages}
+                  {v.impPageLabel}
                 </span>
                 <span>
                   {v.impProgW}
@@ -199,7 +231,7 @@ export function ImportarScreen({ v }: { v: VM }) {
               {v.impErrText}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "4px" }}>
-              <button className="dh21" onClick={v.restartImport} style={{ height: "48px", padding: "0 24px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+              <button className="dh22" onClick={v.restartImport} style={{ height: "48px", padding: "0 24px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
                 Tentar outro arquivo
               </button>
               <button onClick={v.goCriar} style={{ height: "48px", padding: "0 20px", borderRadius: "999px", border: "1px solid rgba(163,48,63,.3)", background: "rgba(253,251,245,.7)", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
@@ -317,7 +349,7 @@ export function ImportarScreen({ v }: { v: VM }) {
                         <button className="dh1" onClick={it.onEdit} style={{ height: "32px", padding: "0 12px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "transparent", fontSize: "12.5px", fontWeight: "600", cursor: "pointer" }}>
                           {it.editL}
                         </button>
-                        <button className="dh22" onClick={it.onDel} style={{ height: "32px", padding: "0 12px", borderRadius: "999px", border: "1px solid transparent", background: "transparent", fontSize: "12.5px", fontWeight: "600", color: "#A3303F", cursor: "pointer" }}>
+                        <button className="dh23" onClick={it.onDel} style={{ height: "32px", padding: "0 12px", borderRadius: "999px", border: "1px solid transparent", background: "transparent", fontSize: "12.5px", fontWeight: "600", color: "#A3303F", cursor: "pointer" }}>
                           Excluir
                         </button>
                       </div>
@@ -340,6 +372,61 @@ export function ImportarScreen({ v }: { v: VM }) {
             </div>
           </div>
       )}
+      {!!(v.impDk) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontFamily: "'Fraunces',serif", fontSize: "clamp(30px,5cqi,42px)", lineHeight: "1" }}>
+                <span style={{ fontStyle: "italic", color: "#A8436E" }}>
+                  {v.impDkTotal}
+                </span>
+                {" cards em "}
+                {v.impDkN}
+              </span>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11.5px", color: "#8A7C68" }}>
+                {v.impFileName}
+                {" · "}
+                {v.impDkImgs}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", padding: "14px 18px", borderRadius: "16px", background: "#E4E8D6", fontSize: "14px", lineHeight: "1.5", color: "#55643F" }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", paddingTop: "2px" }}>
+                i
+              </span>
+              Cada baralho entra como um baralho novo aqui, com os cards como novos: o progresso do app de origem não vem junto. Depois você edita, junta ou apaga o que quiser.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {v.impDkList.map((d, i_d) => (
+                <Fragment key={i_d}>
+                  <div style={{ display: "flex", gap: "14px", alignItems: "center", padding: "16px", borderRadius: "18px", background: "#FDFBF5", border: "1px solid #E3D9C4", opacity: d.op, transition: "opacity .2s" }}>
+                    <button onClick={d.toggle} title="Incluir" style={{ width: "26px", height: "26px", flex: "none", borderRadius: "8px", border: `1.5px solid ${d.cbBd}`, background: d.cbBg, color: "#FFF", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {d.cbSym}
+                    </button>
+                    <span style={{ width: "14px", height: "18px", borderRadius: "3px", flex: "none", background: d.dot }} />
+                    <div style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <span style={{ fontFamily: "'Fraunces',serif", fontSize: "19px", lineHeight: "1.2" }}>
+                        {d.nome}
+                      </span>
+                      <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68" }}>
+                        {d.info}
+                      </span>
+                    </div>
+                    <span style={{ flex: "1 1 200px", minWidth: "0", fontSize: "13px", color: "#6E6250", lineHeight: "1.4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.exemplo}
+                    </span>
+                  </div>
+                </Fragment>
+              ))}
+            </div>
+            <div style={{ position: "sticky", bottom: "12px", display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", justifyContent: "space-between", padding: "12px 12px 12px 22px", borderRadius: "999px", background: "#4A4034", color: "#FDFBF5", boxShadow: "0 12px 30px -10px rgba(74,64,52,.5)" }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "12px" }}>
+                {v.impDkSelLabel}
+              </span>
+              <button className="dh2" onClick={v.addImportDecks} style={{ height: "46px", padding: "0 24px", borderRadius: "999px", border: "none", background: "#F4D9E3", color: "#4A4034", fontWeight: "700", fontSize: "14.5px", cursor: "pointer" }}>
+                Importar baralhos
+              </button>
+            </div>
+          </div>
+      )}
       {!!(v.imp4) && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "14px", padding: "clamp(28px,5cqi,48px)", borderRadius: "28px", backgroundColor: "#DCEBD9", backgroundImage: "radial-gradient(rgba(62,107,74,.14) 1.2px,transparent 1.7px)", backgroundSize: "14px 14px", position: "relative", overflow: "hidden" }}>
             <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#FDFBF5", border: "2px solid #4F7358", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", color: "#4F7358", animation: "pop .5s ease both" }}>
@@ -353,16 +440,14 @@ export function ImportarScreen({ v }: { v: VM }) {
               </span>
             </h2>
             <p style={{ margin: "0", fontSize: "15px", color: "#3E6B4A" }}>
-              {"Eles entram como novos em "}
-              {v.impDeckName}
-              {" e aparecem aos poucos nas próximas sessões."}
+              {v.impDoneMsg}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "6px" }}>
               <button onClick={v.goImpDeck} style={{ height: "48px", padding: "0 24px", borderRadius: "999px", border: "none", background: "#B03D66", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-                Ver baralho
+                {v.impDoneBtn}
               </button>
               <button onClick={v.restartImport} style={{ height: "48px", padding: "0 20px", borderRadius: "999px", border: "1px solid rgba(62,107,74,.3)", background: "rgba(253,251,245,.7)", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
-                Importar outro PDF
+                Importar outro arquivo
               </button>
             </div>
           </div>

@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DAY_MS, dayKey } from '../lib/dates';
 import { State } from '../scheduler';
 import { BackupInvalido, exportBackup, importBackup, validateBackup } from './backup';
-import { addCards, createDeck, ensureSetup, recordReview, runShield, updateConfig } from './repo';
+import {
+  addCards, createDeck, deleteCard, deleteDeck, ensureSetup, gcMedia, importDecks, recordReview, runShield, saveMedia, updateCard, updateConfig,
+} from './repo';
 import { FlashcardsDB } from './schema';
 import { SEED } from './seed';
 
@@ -70,7 +72,88 @@ describe('runShield', () => {
   });
 });
 
+const img = () => new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+
+describe('imagens e baralhos', () => {
+  it('excluir card apaga a imagem que só ele usava', async () => {
+    await ensureSetup(db, NOW, false);
+    const deckId = await createDeck(db, 'Micro', '', 0, NOW);
+    const m1 = await saveMedia(db, img(), NOW);
+    const m2 = await saveMedia(db, img(), NOW);
+    await addCards(db, deckId, [{ frente: 'a', verso: 'b', imgsFrente: [m1, m2] }, { frente: 'c', verso: 'd', imgsVerso: [m2] }], 'manual', NOW);
+    const [c1] = await db.cards.filter((c) => c.frente === 'a').toArray();
+    await deleteCard(db, c1.id);
+    expect(await db.media.get(m1)).toBeUndefined();
+    expect(await db.media.get(m2)).toBeDefined();
+  });
+
+  it('trocar a imagem num card apaga a antiga', async () => {
+    await ensureSetup(db, NOW, false);
+    const deckId = await createDeck(db, 'Micro', '', 0, NOW);
+    const m1 = await saveMedia(db, img(), NOW);
+    const m2 = await saveMedia(db, img(), NOW);
+    await addCards(db, deckId, [{ frente: 'a', verso: 'b', imgsFrente: [m1] }], 'manual', NOW);
+    const [c] = await db.cards.toArray();
+    await updateCard(db, c.id, { imgsFrente: [m2] });
+    expect(await db.media.get(m1)).toBeUndefined();
+    expect(await db.media.get(m2)).toBeDefined();
+  });
+
+  it('excluir baralho apaga cards e imagens, mas guarda as revisões', async () => {
+    await ensureSetup(db, NOW, false);
+    const deckId = await createDeck(db, 'Micro', '', 0, NOW);
+    const m1 = await saveMedia(db, img(), NOW);
+    await addCards(db, deckId, [{ frente: 'a', verso: 'b', imgsVerso: [m1] }], 'manual', NOW);
+    await recordReview(db, (await db.cards.toArray())[0], 3, NOW, 1000);
+    await deleteDeck(db, deckId);
+    expect(await db.decks.count()).toBe(0);
+    expect(await db.cards.count()).toBe(0);
+    expect(await db.media.count()).toBe(0);
+    expect(await db.reviews.count()).toBe(1);
+  });
+
+  it('limpeza só apaga imagens órfãs com mais de um dia', async () => {
+    await ensureSetup(db, NOW, false);
+    await saveMedia(db, img(), NOW - 2 * DAY_MS);
+    await saveMedia(db, img(), NOW);
+    expect(await gcMedia(db, NOW)).toBe(1);
+    expect(await db.media.count()).toBe(1);
+  });
+
+  it('importar baralhos: nomes repetidos ganham sufixo, imagens são ligadas e não contam como criados', async () => {
+    await ensureSetup(db, NOW, false);
+    await createDeck(db, 'Farmaco', '', 0, NOW);
+    const r = await importDecks(
+      db,
+      [{ nome: 'Farmaco', cards: [{ frente: 'a', verso: 'b', imgsFrente: ['x.png', 'faltando.png'], imgsVerso: [] }] }, { nome: 'Vazio', cards: [] }],
+      new Map([['x.png', img()]]),
+      'anki',
+      NOW,
+    );
+    expect(r).toMatchObject({ cards: 1, imagens: 1 });
+    expect((await db.decks.get(r.decks[0]))?.nome).toBe('Farmaco (2)');
+    const card = (await db.cards.toArray())[0];
+    expect(card.imgsFrente).toHaveLength(1);
+    expect(await db.media.get(card.imgsFrente![0])).toBeDefined();
+    expect((await db.dias.get(dayKey(NOW)))?.criados ?? 0).toBe(0);
+  });
+});
+
 describe('backup', () => {
+  it('versão 2 leva as imagens junto', async () => {
+    await ensureSetup(db, NOW, false);
+    const deckId = await createDeck(db, 'Micro', '', 0, NOW);
+    const m1 = await saveMedia(db, img(), NOW);
+    await addCards(db, deckId, [{ frente: 'a', verso: 'b', imgsFrente: [m1] }], 'manual', NOW);
+    const json = JSON.parse(JSON.stringify(await exportBackup(db, NOW)));
+    expect(json.versao).toBe(2);
+    const other = new FlashcardsDB(`test-${++n}`);
+    await importBackup(other, validateBackup(json));
+    const m = await other.media.get(m1);
+    expect(new Uint8Array(await m!.blob.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+    await other.delete();
+  });
+
   it('ida e volta preserva tudo', async () => {
     await ensureSetup(db, NOW);
     const card = (await db.cards.toArray())[0];

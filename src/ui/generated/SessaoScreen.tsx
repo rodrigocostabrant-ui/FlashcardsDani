@@ -1,5 +1,5 @@
 // Gerado por scripts/design-to-tsx.mjs a partir de design/markup.src.html — não edite à mão.
-import { type CSSProperties } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 import type { VM } from '../vm';
 
 export function SessaoScreen({ v }: { v: VM }) {
@@ -41,9 +41,20 @@ export function SessaoScreen({ v }: { v: VM }) {
           </span>
         </div>
         <div style={{ flex: "1", display: "flex", flexDirection: "column", justifyContent: "center", gap: "24px", textAlign: "center" }}>
-          <p style={{ margin: "0", fontFamily: "'Fraunces',serif", fontWeight: "400", fontSize: "clamp(24px,4.2cqi,34px)", lineHeight: "1.25", letterSpacing: "-.01em", textWrap: "balance" }}>
-            {v.sCard.q}
-          </p>
+          {!!(v.sCard.q) && (
+              <p style={{ margin: "0", fontFamily: "'Fraunces',serif", fontWeight: "400", fontSize: "clamp(24px,4.2cqi,34px)", lineHeight: "1.25", letterSpacing: "-.01em", textWrap: "balance", whiteSpace: "pre-line" }}>
+                {v.sCard.q}
+              </p>
+          )}
+          {!!(v.sHasImgsQ) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+                {v.sImgsQ.map((im, i_im) => (
+                  <Fragment key={i_im}>
+                    <img src={im.url} onClick={im.open} alt="Imagem da pergunta" title="Ampliar" style={{ maxWidth: "100%", maxHeight: "clamp(170px,36cqi,320px)", borderRadius: "14px", border: "1px solid #E3D9C4", background: "#FFF", cursor: "zoom-in", objectFit: "contain" }} />
+                  </Fragment>
+                ))}
+              </div>
+          )}
           {!!(v.revealed) && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", animation: "fadeUp .3s ease both" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -53,11 +64,22 @@ export function SessaoScreen({ v }: { v: VM }) {
                   </span>
                   <span style={{ flex: "1", borderTop: "1.5px dashed #E3D9C4" }} />
                 </div>
-                <p style={{ margin: "0", fontSize: "clamp(17px,2.8cqi,21px)", lineHeight: "1.55", textWrap: "pretty" }}>
-                  <span style={{ background: "linear-gradient(transparent 58%,rgba(243,227,181,.9) 58%)", padding: "0 2px" }}>
-                    {v.sCard.a}
-                  </span>
-                </p>
+                {!!(v.sCard.a) && (
+                    <p style={{ margin: "0", fontSize: "clamp(17px,2.8cqi,21px)", lineHeight: "1.55", textWrap: "pretty", whiteSpace: "pre-line" }}>
+                      <span style={{ background: "linear-gradient(transparent 58%,rgba(243,227,181,.9) 58%)", padding: "0 2px" }}>
+                        {v.sCard.a}
+                      </span>
+                    </p>
+                )}
+                {!!(v.sHasImgsA) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+                      {v.sImgsA.map((im, i_im) => (
+                        <Fragment key={i_im}>
+                          <img src={im.url} onClick={im.open} alt="Imagem da resposta" title="Ampliar" style={{ maxWidth: "100%", maxHeight: "clamp(170px,36cqi,320px)", borderRadius: "14px", border: "1px solid #E3D9C4", background: "#FFF", cursor: "zoom-in", objectFit: "contain" }} />
+                        </Fragment>
+                      ))}
+                    </div>
+                )}
               </div>
           )}
         </div>

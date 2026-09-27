@@ -93,27 +93,157 @@ export async function updateDeck(db: FlashcardsDB, id: string, patch: Partial<Om
   await db.decks.update(id, patch);
 }
 
+export interface NovoCard {
+  frente: string;
+  verso: string;
+  tags?: string[];
+  imgsFrente?: string[];
+  imgsVerso?: string[];
+}
+
 export async function addCards(
   db: FlashcardsDB,
   deckId: string,
-  pares: { frente: string; verso: string; tags?: string[] }[],
+  pares: NovoCard[],
   origem: CardRow['origem'],
   now: number,
+  contarCriados = true,
 ): Promise<number> {
   if (!pares.length) return 0;
   await db.transaction('rw', db.cards, db.dias, db.config, async () => {
-    await db.cards.bulkPut(pares.map((p, i) => newCard(deckId, p.frente.trim(), p.verso.trim(), p.tags ?? [], origem, now + i)));
-    await bumpDia(db, dayKey(now), { criados: pares.length });
+    await db.cards.bulkPut(
+      pares.map((p, i) => ({
+        ...newCard(deckId, p.frente.trim(), p.verso.trim(), p.tags ?? [], origem, now + i),
+        imgsFrente: p.imgsFrente ?? [],
+        imgsVerso: p.imgsVerso ?? [],
+      })),
+    );
+    if (contarCriados) await bumpDia(db, dayKey(now), { criados: pares.length });
   });
   return pares.length;
 }
 
-export async function updateCard(db: FlashcardsDB, id: string, patch: Partial<Pick<CardRow, 'frente' | 'verso' | 'tags' | 'deckId' | 'suspenso'>>) {
-  await db.cards.update(id, patch);
+export async function updateCard(
+  db: FlashcardsDB,
+  id: string,
+  patch: Partial<Pick<CardRow, 'frente' | 'verso' | 'tags' | 'deckId' | 'suspenso' | 'imgsFrente' | 'imgsVerso'>>,
+) {
+  await db.transaction('rw', db.cards, db.media, async () => {
+    const before = await db.cards.get(id);
+    await db.cards.update(id, patch);
+    if (before) await dropUnusedMedia(db, [...(before.imgsFrente ?? []), ...(before.imgsVerso ?? [])]);
+  });
 }
 
 export async function deleteCard(db: FlashcardsDB, id: string) {
-  await db.cards.delete(id);
+  await db.transaction('rw', db.cards, db.media, async () => {
+    const c = await db.cards.get(id);
+    await db.cards.delete(id);
+    if (c) await dropUnusedMedia(db, [...(c.imgsFrente ?? []), ...(c.imgsVerso ?? [])]);
+  });
+}
+
+/** Apaga o baralho e seus cards de vez. As revisões ficam: a Evolução continua contando o que foi estudado. */
+export async function deleteDeck(db: FlashcardsDB, id: string) {
+  await db.transaction('rw', db.decks, db.cards, db.media, async () => {
+    const cards = await db.cards.where('deckId').equals(id).toArray();
+    await db.cards.bulkDelete(cards.map((c) => c.id));
+    await db.decks.delete(id);
+    await dropUnusedMedia(db, cards.flatMap((c) => [...(c.imgsFrente ?? []), ...(c.imgsVerso ?? [])]));
+  });
+}
+
+// ---------- imagens ----------
+
+export async function saveMedia(db: FlashcardsDB, blob: Blob, now: number): Promise<string> {
+  const id = uid();
+  await db.media.put({ id, blob, mime: blob.type || 'image/png', criadoEm: now });
+  return id;
+}
+
+async function dropUnusedMedia(db: FlashcardsDB, ids: string[]) {
+  if (!ids.length) return;
+  const candidates = new Set(ids);
+  await db.cards.each((c) => {
+    for (const m of c.imgsFrente ?? []) candidates.delete(m);
+    for (const m of c.imgsVerso ?? []) candidates.delete(m);
+  });
+  if (candidates.size) await db.media.bulkDelete([...candidates]);
+}
+
+/**
+ * Remove imagens que nenhum card usa (anexadas num card que nunca foi salvo, por exemplo).
+ * Só mexe em imagens com mais de um dia, para não apagar o que está sendo editado agora.
+ */
+export async function gcMedia(db: FlashcardsDB, now: number): Promise<number> {
+  return db.transaction('rw', db.cards, db.media, async () => {
+    const used = new Set<string>();
+    await db.cards.each((c) => {
+      for (const m of c.imgsFrente ?? []) used.add(m);
+      for (const m of c.imgsVerso ?? []) used.add(m);
+    });
+    const orphans = (await db.media.toCollection().primaryKeys()).filter((k) => !used.has(k));
+    const old = (await db.media.bulkGet(orphans)).filter((m) => m && m.criadoEm < now - 86_400_000).map((m) => m!.id);
+    await db.media.bulkDelete(old);
+    return old.length;
+  });
+}
+
+// ---------- importação de baralhos ----------
+
+export interface BaralhoImportado {
+  nome: string;
+  descricao?: string;
+  cor?: number;
+  cards: { frente: string; verso: string; tags?: string[]; imgsFrente: string[]; imgsVerso: string[] }[];
+}
+
+/**
+ * Cria um baralho novo por baralho importado. As imagens chegam por chave (nome no arquivo de origem)
+ * e são gravadas na tabela media; os cards entram como novos, sem o progresso de origem.
+ */
+export async function importDecks(
+  db: FlashcardsDB,
+  baralhos: BaralhoImportado[],
+  media: Map<string, Blob>,
+  origem: CardRow['origem'],
+  now: number,
+): Promise<{ decks: string[]; cards: number; imagens: number }> {
+  return db.transaction('rw', [db.decks, db.cards, db.media, db.dias, db.config], async () => {
+    const existentes = new Set((await db.decks.toArray()).filter((d) => !d.arquivado).map((d) => d.nome.toLowerCase()));
+    const mediaIds = new Map<string, string>();
+    const usar = (keys: string[]) =>
+      keys.flatMap((k) => {
+        const blob = media.get(k);
+        if (!blob) return [];
+        let id = mediaIds.get(k);
+        if (!id) mediaIds.set(k, (id = uid()));
+        return [id];
+      });
+    const deckIds: string[] = [];
+    let total = 0;
+    let t = now;
+    for (const [i, b] of baralhos.entries()) {
+      if (!b.cards.length) continue;
+      let nome = b.nome.trim() || 'Baralho importado';
+      for (let n = 2; existentes.has(nome.toLowerCase()); n++) nome = `${b.nome.trim()} (${n})`;
+      existentes.add(nome.toLowerCase());
+      const deckId = uid();
+      await db.decks.put({ id: deckId, nome, descricao: b.descricao ?? '', cor: b.cor ?? i % 5, criadoEm: t++, arquivado: false });
+      const cards = b.cards.map((c) => ({ frente: c.frente, verso: c.verso, tags: c.tags, imgsFrente: usar(c.imgsFrente), imgsVerso: usar(c.imgsVerso) }));
+      await addCards(db, deckId, cards, origem, t, false);
+      t += cards.length;
+      total += cards.length;
+      deckIds.push(deckId);
+    }
+    await db.media.bulkPut(
+      [...mediaIds].map(([k, id]) => {
+        const blob = media.get(k)!;
+        return { id, blob, mime: blob.type || 'image/png', criadoEm: now };
+      }),
+    );
+    return { decks: deckIds, cards: total, imagens: mediaIds.size };
+  });
 }
 
 /** Grava a avaliação na hora: card, histórico e contadores do dia numa transação só. */

@@ -23,7 +23,7 @@ export function BaralhosScreen({ v }: { v: VM }) {
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
           <button className="dh15" onClick={v.goImport} style={{ height: "46px", padding: "0 20px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
-            Importar PDF
+            Importar
           </button>
           <button className="dh14" onClick={v.openNovoBaralho} style={{ height: "46px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#B03D66", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 3px 0 #8C2F51" }}>
             + Novo baralho

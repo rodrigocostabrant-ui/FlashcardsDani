@@ -31,10 +31,28 @@ export function CriarScreen({ v }: { v: VM }) {
               <label style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".14em", color: "#A8436E" }}>
                 PERGUNTA · FRENTE
               </label>
-              <textarea value={v.cc.q} onChange={v.onCcQ} rows={3} placeholder="Ex.: Qual o antídoto da intoxicação por heparina?" style={{ width: "100%", resize: "vertical", border: "none", outline: "none", background: "repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px)", lineHeight: "34px", fontFamily: "'Fraunces',serif", fontSize: "22px", padding: "0", minHeight: "102px" }} />
+              <textarea value={v.cc.q} onChange={v.onCcQ} onPaste={v.onPasteQ} onKeyDown={v.onCcKey} rows={3} placeholder="Ex.: Qual o antídoto da intoxicação por heparina?" style={{ width: "100%", resize: "vertical", border: "none", outline: "none", background: "repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px)", lineHeight: "34px", fontFamily: "'Fraunces',serif", fontSize: "22px", padding: "0", minHeight: "102px" }} />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+                {v.ccImgsQ.map((im, i_im) => (
+                  <Fragment key={i_im}>
+                    <div style={{ position: "relative", width: "88px", height: "66px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E3D9C4", background: "#FFF" }}>
+                      <img src={im.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <button onClick={im.rm} title="Remover imagem" style={{ position: "absolute", top: "4px", right: "4px", width: "22px", height: "22px", borderRadius: "50%", border: "none", background: "rgba(74,64,52,.78)", color: "#FFF", fontSize: "13px", lineHeight: "1", cursor: "pointer" }}>
+                        ×
+                      </button>
+                    </div>
+                  </Fragment>
+                ))}
+                <button className="dh2" onClick={v.addImgQ} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px dashed #D98CAE", background: "transparent", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#A8436E", cursor: "pointer" }}>
+                  + imagem
+                </button>
+                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#B5A88F" }}>
+                  {v.ccPasteHint}
+                </span>
+              </div>
               {!!(v.ccErrQ) && (
                   <span style={{ fontSize: "12.5px", color: "#A3303F" }}>
-                    Escreva a pergunta antes de salvar.
+                    Escreva a pergunta ou coloque uma imagem antes de salvar.
                   </span>
               )}
             </div>
@@ -42,18 +60,41 @@ export function CriarScreen({ v }: { v: VM }) {
               <label style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".14em", color: "#4F7358" }}>
                 RESPOSTA · VERSO
               </label>
-              <textarea value={v.cc.a} onChange={v.onCcA} rows={4} placeholder="Ex.: Sulfato de protamina." style={{ width: "100%", resize: "vertical", border: "none", outline: "none", background: "repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px)", lineHeight: "34px", fontSize: "17px", padding: "0", minHeight: "136px" }} />
+              <textarea value={v.cc.a} onChange={v.onCcA} onPaste={v.onPasteA} onKeyDown={v.onCcKey} rows={4} placeholder="Ex.: Sulfato de protamina." style={{ width: "100%", resize: "vertical", border: "none", outline: "none", background: "repeating-linear-gradient(to bottom,transparent 0 33px,rgba(127,160,184,.28) 33px 34px)", lineHeight: "34px", fontSize: "17px", padding: "0", minHeight: "136px" }} />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+                {v.ccImgsA.map((im, i_im) => (
+                  <Fragment key={i_im}>
+                    <div style={{ position: "relative", width: "88px", height: "66px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E3D9C4", background: "#FFF" }}>
+                      <img src={im.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <button onClick={im.rm} title="Remover imagem" style={{ position: "absolute", top: "4px", right: "4px", width: "22px", height: "22px", borderRadius: "50%", border: "none", background: "rgba(74,64,52,.78)", color: "#FFF", fontSize: "13px", lineHeight: "1", cursor: "pointer" }}>
+                        ×
+                      </button>
+                    </div>
+                  </Fragment>
+                ))}
+                <button className="dh21" onClick={v.addImgA} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px dashed #7FA886", background: "transparent", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#4F7358", cursor: "pointer" }}>
+                  + imagem
+                </button>
+                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#B5A88F" }}>
+                  {v.ccPasteHint}
+                </span>
+              </div>
               {!!(v.ccErrA) && (
                   <span style={{ fontSize: "12.5px", color: "#A3303F" }}>
-                    Falta a resposta.
+                    Falta a resposta (texto ou imagem).
                   </span>
               )}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", paddingTop: "6px", borderTop: "1px dashed #E3D9C4" }}>
               <div style={{ flex: "1 1 200px", display: "flex", flexDirection: "column", gap: "6px", paddingTop: "12px" }}>
-                <label style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".14em", color: "#8A7C68" }}>
-                  BARALHO
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <label style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".14em", color: "#8A7C68" }}>
+                    BARALHO
+                  </label>
+                  <button onClick={v.openNovoBaralho} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#A8436E", textDecoration: "underline" }}>
+                    + novo
+                  </button>
+                </div>
                 <select value={v.cc.deck} onChange={v.onCcDeck} style={{ height: "44px", padding: "0 16px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#F6EFE0", fontSize: "14px", fontWeight: "600", outline: "none", cursor: "pointer" }}>
                   {v.decksV.map((d, i_d) => (
                     <Fragment key={i_d}>
@@ -89,13 +130,31 @@ export function CriarScreen({ v }: { v: VM }) {
             assim vai aparecer no estudo
           </div>
           <div style={{ padding: "22px", borderRadius: "18px", background: "#FDFBF5", border: "1px solid #E3D9C4", display: "flex", flexDirection: "column", gap: "12px", textAlign: "center" }}>
-            <span style={{ fontFamily: "'Fraunces',serif", fontSize: "18px", lineHeight: "1.3", color: v.ccPrevQc }}>
+            <span style={{ fontFamily: "'Fraunces',serif", fontSize: "18px", lineHeight: "1.3", color: v.ccPrevQc, whiteSpace: "pre-line" }}>
               {v.ccPrevQ}
             </span>
+            {!!(v.ccHasImgsQ) && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
+                  {v.ccImgsQ.map((im, i_im) => (
+                    <Fragment key={i_im}>
+                      <img src={im.url} alt="" style={{ maxWidth: "100%", maxHeight: "120px", borderRadius: "8px" }} />
+                    </Fragment>
+                  ))}
+                </div>
+            )}
             <span style={{ borderTop: "1.5px dashed #E3D9C4" }} />
-            <span style={{ fontSize: "14px", lineHeight: "1.5", color: v.ccPrevAc }}>
+            <span style={{ fontSize: "14px", lineHeight: "1.5", color: v.ccPrevAc, whiteSpace: "pre-line" }}>
               {v.ccPrevA}
             </span>
+            {!!(v.ccHasImgsA) && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
+                  {v.ccImgsA.map((im, i_im) => (
+                    <Fragment key={i_im}>
+                      <img src={im.url} alt="" style={{ maxWidth: "100%", maxHeight: "120px", borderRadius: "8px" }} />
+                    </Fragment>
+                  ))}
+                </div>
+            )}
           </div>
           <ul style={{ margin: "0", padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: "8px", fontSize: "13.5px", lineHeight: "1.45", color: "#6E6250" }}>
             <li>
@@ -115,6 +174,9 @@ export function CriarScreen({ v }: { v: VM }) {
             <button className="dh1" onClick={v.saveCardAgain} style={{ height: "46px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "14px", cursor: "pointer", color: v.ccSave2C }}>
               {v.ccSave2L}
             </button>
+            <span style={{ alignSelf: "center", fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#B5A88F" }}>
+              {v.ccKeyHint}
+            </span>
             {!!(v.ccEditing) && (
                 <button onClick={v.toggleSuspend} style={{ alignSelf: "center", border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68", textDecoration: "underline" }}>
                   {v.ccSuspL}

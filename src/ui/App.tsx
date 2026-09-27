@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
-import { ensureSetup, runShield } from '../db/repo';
+import { ensureSetup, gcMedia, runShield } from '../db/repo';
 import { db } from '../db/schema';
 import { dayKey, parseDayKey } from '../lib/dates';
 import { DIAS_SEMANA, shortDate } from '../lib/format';
@@ -28,6 +28,7 @@ export function App() {
         const used = await runShield(db, Date.now());
         if (used) setAviso(shieldMsg(used));
         setBoot('ready');
+        void gcMedia(db, Date.now());
       } catch (e) {
         console.error(e);
         setBoot('blocked');

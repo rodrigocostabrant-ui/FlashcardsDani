@@ -29,7 +29,7 @@ export function AjustesScreen({ v }: { v: VM }) {
         <div style={{ flex: "1 1 420px", minWidth: "0", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "12px" }}>
           {v.presets.map((p, i_p) => (
             <Fragment key={i_p}>
-              <button className="dh23" onClick={p.pick} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px", padding: "18px", borderRadius: "20px", border: p.bd, backgroundColor: p.bg, backgroundImage: p.pat, backgroundSize: p.ps, textAlign: "left", cursor: "pointer", transition: "transform .15s" }}>
+              <button className="dh24" onClick={p.pick} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px", padding: "18px", borderRadius: "20px", border: p.bd, backgroundColor: p.bg, backgroundImage: p.pat, backgroundSize: p.ps, textAlign: "left", cursor: "pointer", transition: "transform .15s" }}>
                 <span style={{ position: "absolute", right: "14px", top: "14px", width: "22px", height: "22px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", background: p.ck, color: "#FFF" }}>
                   {p.sym}
                 </span>
@@ -123,7 +123,7 @@ export function AjustesScreen({ v }: { v: VM }) {
             </span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            <button className="dh24" onClick={v.exportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#4A4034", color: "#FDFBF5", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+            <button className="dh25" onClick={v.exportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#4A4034", color: "#FDFBF5", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
               Exportar dados
             </button>
             <button className="dh1" onClick={v.openImportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
@@ -156,6 +156,9 @@ export function AjustesScreen({ v }: { v: VM }) {
                         {" cards"}
                       </span>
                     </div>
+                    <button className="dh23" onClick={d.remove} style={{ height: "36px", padding: "0 14px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "13px", color: "#A3303F", cursor: "pointer" }}>
+                      Excluir
+                    </button>
                     <button className="dh15" onClick={d.restore} style={{ height: "36px", padding: "0 16px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "700", fontSize: "13px", cursor: "pointer" }}>
                       Restaurar
                     </button>

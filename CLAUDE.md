@@ -52,11 +52,17 @@ Quatro núcleos de lógica pura, independentes da tela e do banco, mais a UI:
   - `extractText(file, onProgress, cancelado)` → `{ paginas }`
   - `detectCards(paginas)` → `ResultadoDeteccao`
 - **`src/lib/`** — datas locais (`YYYY-MM-DD`, semana começando na segunda) e formatação em pt-BR.
+- **`src/importers/`** — leitores de baralhos de fora, todos puros e testados em Node:
+  - `anki.ts` — `.apkg`/`.colpkg` (formato antigo e o novo `anki21b` com zstd + mapa de mídia em protobuf). Usa jszip, fzstd e sql.js (SQLite em WebAssembly, carregado sob demanda).
+  - `text.ts` — CSV/TSV/TXT com aspas; entende os cabeçalhos da exportação de texto do Anki (`#separator`, `#html`, colunas de guid/deck/tags) e exportação do Quizlet.
+  - `deckFile.ts` — formato `.json` do próprio app (baralhos + imagens em base64), usado por "exportar baralho".
+  - `html.ts` — HTML de campo → texto simples + lista de imagens citadas.
+- **`src/ui/media.ts`** — reduz fotos grandes antes de salvar (máx. 1600 px, WebP) e carrega do IndexedDB só as imagens que estão na tela.
 - **`src/goals/`** — contadores do dia, ofensiva, disciplina, escudo. Funções puras sobre o histórico.
 
 **Regra que sustenta os testes**: `scheduler`, `pdf/detectCards` e `goals` não conhecem Dexie nem React. Entrada → saída. É isso que torna os testes possíveis.
 
-## Modelo de dados (IndexedDB, 5 tabelas)
+## Modelo de dados (IndexedDB, 6 tabelas — schema versão 2)
 
 Datas são guardadas em epoch ms (`number`), não `Date`, para o backup JSON ser ida-e-volta sem conversão.
 
@@ -64,7 +70,7 @@ Datas são guardadas em epoch ms (`number`), não `Date`, para o backup JSON ser
 `id` · `nome` · `descricao` (assuntos, aparece como subtítulo) · `cor` (índice 0-4 em `DECK_COLORS`) · `criadoEm` · `arquivado`
 
 **`cards`** — conteúdo + estado FSRS guardado tal como a biblioteca o produz
-`id` · `deckId` · `frente` · `verso` · `tags[]` · `origem` (manual | pdf) · `criadoEm` · `suspenso`
+`id` · `deckId` · `frente` · `verso` · `tags[]` · `origem` (manual | pdf | anki | arquivo) · `criadoEm` · `suspenso` · `imgsFrente[]` · `imgsVerso[]` (ids na tabela `media`; ausentes em cards antigos = sem imagem)
 `due` · `stability` · `difficulty` · `elapsed_days` · `scheduled_days` · `learning_steps` · `reps` · `lapses` · `state` · `last_review`
 
 **`reviews`** — um registro por avaliação, nunca editado nem apagado (nem quando o card é excluído); fonte de todos os gráficos
@@ -77,9 +83,15 @@ Datas são guardadas em epoch ms (`number`), não `Date`, para o backup JSON ser
 **`config`** — registro único (`id: 'cfg'`)
 `metaRespondidos` = 30 · `metaCriados` = 5 · `limiteNovosPorDia` = 20 · `preset` · `diasDescanso` (7 booleanos, Seg..Dom) · `escudoDisponivel` · `escudoRecarregadoEm` (segunda da semana) · `escudoUltimoUso` · `inicio` (primeiro dia de uso; dias anteriores não contam como falha) · `ultimoBackup` · `lembrete` (`{ titulo, data }` da próxima prova, ou null)
 
+**`media`** — imagens dos cards: `id` · `blob` · `mime` · `criadoEm`. Um card guarda só os ids.
+- Excluir/editar card ou excluir baralho apaga as imagens que ninguém mais usa (`dropUnusedMedia` em `repo.ts`).
+- Imagem anexada num card que nunca foi salvo fica órfã; `gcMedia` roda ao abrir o app e apaga órfãs com mais de um dia (não mexe nas recentes, que podem estar em edição).
+
 Índices em `cards`: `deckId`, `due`, `state`.
 
-**Primeiro uso**: cria a config e os 5 baralhos de exemplo do protótipo (Anatomia II, Fisiologia, Farmacologia, Patologia, Clínica Médica). Dá para arquivá-los.
+**Primeiro uso**: cria a config e os 5 baralhos de exemplo do protótipo (Anatomia II, Fisiologia, Farmacologia, Patologia, Clínica Médica). Dá para arquivar ou excluir.
+
+**Baralhos**: arquivar tira das sessões e guarda tudo (restaura em Ajustes). Excluir (no diálogo "editar" do baralho, ou em Ajustes para arquivados) apaga cards e imagens de vez; as revisões ficam, para a Evolução continuar contando o que foi estudado.
 
 **Por que a meta é copiada para dentro do dia**: as metas são copiadas para o registro do dia no primeiro evento daquele dia. Se a meta subir de 30 para 60, dias passados continuam avaliados contra a meta que valia na época — senão, mudar a meta reescreveria o histórico e transformaria dias cumpridos em falhados.
 
@@ -108,6 +120,23 @@ Novos são distribuídos ao longo da fila, não empilhados no começo.
 **Dentro da sessão**: todo card que sai de uma avaliação ainda em Aprendendo/Reaprendendo volta para o fim da fila (marcado "DE NOVO" se foi Errei, "APRENDENDO" nos demais). É o comportamento do Anki: com os passos padrão (1m, 10m), um card novo avaliado Bom aparece mais uma vez antes de graduar. A decisão de reenfileirar usa `rate()` síncrono; a gravação no banco acontece em paralelo.
 
 **Distinção importante**: `limiteNovosPorDia` é teto (corta a fila); `metaRespondidos` é alvo (só pinta o anel de progresso). Bater a meta não encerra a sessão; não bater não impede de continuar.
+
+## Importação
+
+A tela Importar aceita arquivo (arrastar ou escolher) ou texto colado. O tipo sai da extensão:
+
+| Entrada | Caminho |
+|---|---|
+| `.pdf` | extração pdf.js → seis estratégias → revisão card a card (abaixo) |
+| `.txt` `.csv` `.tsv`, texto colado | se tem colunas (tab, ou `;`/`,` em .csv, ou cabeçalho `#separator` do Anki) vira a "estratégia" `csv` direto; senão cai nas seis estratégias. Depois, revisão card a card |
+| `.apkg` `.colpkg` (Anki) | lê a coleção inteira → tela de resumo por baralho (marcar quais entram) → cada baralho vira um baralho novo, com imagens |
+| `.json` exportado daqui | igual ao Anki: resumo por baralho → baralhos novos com imagens |
+
+Regras da importação de baralhos inteiros (Anki e `.json`):
+- Os cards entram como **novos**. O progresso do app de origem não é trazido (o agendamento do Anki não mapeia direto no nosso estado FSRS).
+- Nome repetido ganha sufixo: "Farmaco (2)". Nunca mistura com um baralho existente.
+- Não conta na meta de "cards criados" do dia (ela não escreveu esses cards).
+- Anki: nota básica vira um card (1º campo = frente, demais = verso). Nota com lacunas `{{c1::…}}` vira um card por lacuna, com a dica se houver. Áudio (`[sound:…]`) é descartado. Hierarquia de baralhos vira "Pai › Filho". Só as imagens citadas nos cards são copiadas.
 
 ## Import de PDF
 
@@ -165,8 +194,10 @@ Navegação: Início · Estudar · Baralhos · Evolução · Ajustes (barra late
 
 1. **Início** — anel da meta, cards para revisar hoje com estimativa de tempo, ofensiva com a semana, disciplina 30 dias, escudo, baralhos com pendências, carga dos próximos 7 dias. Lembrete de prova editável (post-it no canto).
 2. **Estudar** → **Sessão** → **Resultado** — frente → virar → avaliar; atalhos 1-4 e espaço; carimbo animado de feedback; resultado com retenção, tempo e distribuição das notas.
-3. **Baralhos** → **Baralho** → **Criar/editar card** — criar, editar (nome, assuntos, cor) e arquivar baralho; busca; clicar num card abre a edição (salvar, excluir, suspender).
-4. **Importar PDF** — arrastar ou escolher arquivo, progresso por página, revisão editável, conclusão.
+3. **Baralhos** → **Baralho** → **Criar/editar card** — criar, editar (nome, assuntos, cor), exportar, arquivar e excluir baralho; busca; lista sem teto ("Mostrar mais" de 300 em 300); clicar num card abre a edição (salvar, excluir, suspender).
+   - Editor de card: imagens na frente e no verso (botão, ou colar com Ctrl+V), pré-visualização, "+ novo" baralho sem sair do editor, Ctrl+Enter salva e já abre o próximo. Um lado pode ser só imagem.
+   - Na sessão, as imagens aparecem abaixo da pergunta e da resposta; clicar amplia, Esc fecha.
+4. **Importar** — PDF, Anki, CSV/TXT, `.json` do app ou texto colado (ver "Importação").
 5. **Evolução** — painel de longo prazo (ver abaixo). Só é calculado com a tela aberta.
 6. **Ajustes** — presets, metas, dias de descanso, backup (exportar/importar com confirmação), baralhos arquivados (restaurar).
 
@@ -214,7 +245,8 @@ Listras diagonais finas a 135° em `rgba(217,140,174,.09)`; títulos em serifada
 - **IndexedDB indisponível** (aba anônima): avisar, não perder trabalho em silêncio.
 - **Sessão fechada no meio**: fila se reconstrói do banco — nada se perde, cada avaliação grava na hora.
 - **Import duplicado**: detectado e desmarcado por padrão.
-- **Backup corrompido**: valida schema antes de gravar, recusa com mensagem clara.
+- **Backup corrompido**: valida schema antes de gravar, recusa com mensagem clara. O backup é versão 2 (inclui as imagens em base64); backups versão 1, sem imagens, continuam aceitos.
+- **Arquivo de importação inválido** (.apkg corrompido, .json que não é baralho, extensão desconhecida): tela de erro explicando o que usar; nada é gravado.
 - **Relógio do sistema alterado**: revisões usam a data do momento da gravação, nunca recalculada retroativamente.
 
 ## Testes
@@ -224,12 +256,15 @@ Vitest, escritos antes do código (TDD), cobrindo a lógica pura:
 - **scheduler**: as quatro notas a partir de cada estado; Errei devolve o card à sessão; intervalos crescem com a nota; montagem e ordenação da fila; teto de novos por dia.
 - **pdf/detectCards**: cada uma das seis estratégias com um PDF de exemplo; a pontuação escolhe a certa; texto sem estrutura devolve confiança baixa em vez de lixo.
 - **goals**: cumprir e falhar a meta; dia de descanso não quebra a ofensiva; escudo cobre um dia e recarrega na segunda; disciplina de 30 dias com descansos no meio; mudar a meta hoje não reescreve ontem.
-- **db**: migrações e ida-e-volta do backup.
+- **db**: migrações, ida-e-volta do backup (com imagens), limpeza de imagens ao excluir/editar card e baralho, importação de baralhos.
+- **importers**: HTML → texto, CSV com aspas, exportação de texto do Anki e do Quizlet, `.apkg` nos dois formatos (os testes montam um `.apkg` de verdade com sql.js e zstd do Node), lacunas cloze, arquivo `.json` do app.
 
 A UI não tem teste automatizado — é verificada rodando o app no navegador, com screenshots anexados ao final de cada etapa.
 
+Em dev, o Vite precisa conhecer de antemão as bibliotecas carregadas sob demanda (`optimizeDeps.include` em `vite.config.ts`); sem isso ele as descobre no meio de uma importação e recarrega a página.
+
 ## Fora de escopo
 
-Sincronização em nuvem · login · modo escuro · otimização dos pesos do FSRS · cards cloze · imagens ou áudio nos cards · import de `.apkg` · compartilhamento de baralhos · aplicativo nativo.
+Sincronização em nuvem · login · modo escuro · otimização dos pesos do FSRS · cards cloze nativos (lacunas do Anki viram cards comuns na importação) · áudio nos cards · trazer o progresso de revisão do Anki · aplicativo nativo.
 
 Modo escuro e otimização dos pesos são as duas primeiras candidatas a uma segunda fase — a otimização só faz sentido depois de alguns meses de histórico acumulado (precisa de centenas de revisões para treinar).

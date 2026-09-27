@@ -24,6 +24,9 @@ export function BaralhoScreen({ v }: { v: VM }) {
             <button onClick={v.editDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
               editar
             </button>
+            <button onClick={v.exportDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
+              exportar
+            </button>
             <button onClick={v.archiveDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
               arquivar
             </button>
@@ -31,7 +34,7 @@ export function BaralhoScreen({ v }: { v: VM }) {
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
           <button className="dh19" onClick={v.goImport} style={{ height: "46px", padding: "0 18px", borderRadius: "999px", border: "1px solid rgba(74,64,52,.18)", background: "rgba(253,251,245,.7)", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
-            Importar PDF
+            Importar
           </button>
           <button className="dh19" onClick={v.goCriar} style={{ height: "46px", padding: "0 18px", borderRadius: "999px", border: "1px solid rgba(74,64,52,.18)", background: "rgba(253,251,245,.7)", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
             + Novo card
@@ -95,7 +98,7 @@ export function BaralhoScreen({ v }: { v: VM }) {
                 Escrever um card
               </button>
               <button onClick={v.goImport} style={{ height: "46px", padding: "0 20px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
-                Importar PDF
+                Importar
               </button>
             </div>
           </div>
@@ -121,6 +124,12 @@ export function BaralhoScreen({ v }: { v: VM }) {
                     {c.a}
                   </span>
                   <span style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "auto" }}>
+                    {!!(c.nImg) && (
+                        <span title="Imagens no card" style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10px", padding: "3px 8px", borderRadius: "999px", border: "1px solid #E3D9C4", color: "#8A7C68" }}>
+                          {"▣ "}
+                          {c.nImg}
+                        </span>
+                    )}
                     <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10px", letterSpacing: ".08em", padding: "3px 9px", borderRadius: "999px", background: c.tb, color: c.tc }}>
                       {c.state}
                     </span>
@@ -138,11 +147,16 @@ export function BaralhoScreen({ v }: { v: VM }) {
                   ”.
                 </div>
             )}
+            {!!(v.dkHasMore) && (
+                <button className="dh1" onClick={v.dkMore} style={{ alignSelf: "center", marginTop: "14px", height: "42px", padding: "0 22px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "13.5px", cursor: "pointer" }}>
+                  Mostrar mais
+                </button>
+            )}
             <p style={{ margin: "12px 0 0", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68" }}>
               {"mostrando "}
               {v.dkShown}
               {" de "}
-              {v.dk.totalFmt}
+              {v.dkMatch}
             </p>
           </div>
       )}
