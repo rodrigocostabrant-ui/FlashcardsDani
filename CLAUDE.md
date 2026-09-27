@@ -57,7 +57,8 @@ Quatro núcleos de lógica pura, independentes da tela e do banco, mais a UI:
   - `text.ts` — CSV/TSV/TXT com aspas; entende os cabeçalhos da exportação de texto do Anki (`#separator`, `#html`, colunas de guid/deck/tags) e exportação do Quizlet.
   - `deckFile.ts` — formato `.json` do próprio app (baralhos + imagens em base64), usado por "exportar baralho".
   - `html.ts` — HTML de campo → texto simples + lista de imagens citadas.
-- **`src/ui/media.ts`** — reduz fotos grandes antes de salvar (máx. 1600 px, WebP) e carrega do IndexedDB só as imagens que estão na tela.
+- **`src/ui/media.ts`** — reduz fotos grandes antes de salvar (máx. 1600 px, WebP; cai para JPEG no Safari que não gera WebP) e carrega do IndexedDB só as imagens que estão na tela. `temCamera()` (tela de toque) liga o botão "tirar foto".
+- **`src/importers/zip.ts`** — abre um `.zip` e devolve os arquivos importáveis; `tipos.ts` tem a detecção por extensão, separada para o jszip não entrar no carregamento inicial.
 - **`src/goals/`** — contadores do dia, ofensiva, disciplina, escudo. Funções puras sobre o histórico.
 
 **Regra que sustenta os testes**: `scheduler`, `pdf/detectCards` e `goals` não conhecem Dexie nem React. Entrada → saída. É isso que torna os testes possíveis.
@@ -81,7 +82,9 @@ Datas são guardadas em epoch ms (`number`), não `Date`, para o backup JSON ser
 `data` (YYYY-MM-DD) · `respondidos` · `criados` · `novosVistos` · `metaRespondidos` · `metaCriados` · `descanso` · `escudoUsado`
 
 **`config`** — registro único (`id: 'cfg'`)
-`metaRespondidos` = 30 · `metaCriados` = 5 · `limiteNovosPorDia` = 20 · `preset` · `diasDescanso` (7 booleanos, Seg..Dom) · `escudoDisponivel` · `escudoRecarregadoEm` (segunda da semana) · `escudoUltimoUso` · `inicio` (primeiro dia de uso; dias anteriores não contam como falha) · `ultimoBackup` · `lembrete` (`{ titulo, data }` da próxima prova, ou null)
+`metaRespondidos` = 30 · `metaCriados` = 5 · `limiteNovosPorDia` = 20 · `preset` · `diasDescanso` (7 booleanos, Seg..Dom) · `escudoDisponivel` · `escudoRecarregadoEm` (segunda da semana) · `escudoUltimoUso` · `inicio` (primeiro dia de uso; dias anteriores não contam como falha) · `ultimoBackup` · `lembrete` (`{ titulo, data }` da próxima prova, ou null) · `recado` (`{ texto, assinatura }`, cópia local do recadinho, ver abaixo)
+
+**Recadinho motivacional**: o texto mora em `public/recado.json` no repositório (`{"texto": "...", "assinatura": "..."}`), não no aparelho da Dani. Assim quem escreve pode trocar o recado pelo GitHub, de qualquer lugar: o push publica na Vercel e o app busca o arquivo ao abrir, ao voltar a internet e na virada do dia (`atualizarRecado` em `App.tsx`, com `cache: 'no-store'`). A última versão fica guardada em `config.recado` para aparecer offline. Texto vazio esconde o bloco.
 
 **`media`** — imagens dos cards: `id` · `blob` · `mime` · `criadoEm`. Um card guarda só os ids.
 - Excluir/editar card ou excluir baralho apaga as imagens que ninguém mais usa (`dropUnusedMedia` em `repo.ts`).
@@ -131,6 +134,7 @@ A tela Importar aceita arquivo (arrastar ou escolher) ou texto colado. O tipo sa
 | `.txt` `.csv` `.tsv`, texto colado | se tem colunas (tab, ou `;`/`,` em .csv, ou cabeçalho `#separator` do Anki) vira a "estratégia" `csv` direto; senão cai nas seis estratégias. Depois, revisão card a card |
 | `.apkg` `.colpkg` (Anki) | lê a coleção inteira → tela de resumo por baralho (marcar quais entram) → cada baralho vira um baralho novo, com imagens |
 | `.json` exportado daqui | igual ao Anki: resumo por baralho → baralhos novos com imagens |
+| `.zip` | abre e lê cada arquivo suportado de dentro. Um arquivo só: segue o fluxo normal dele (PDF/texto com revisão card a card). Vários: cada PDF/texto vira um baralho com o nome do arquivo (melhor estratégia, aviso se a confiança for baixa), cada `.apkg`/`.json` traz os baralhos dele, e tudo cai na tela de resumo por baralho. Arquivos ignorados (formato desconhecido, PDF com senha/escaneado, sem perguntas) são listados num aviso. Lixo do macOS (`__MACOSX`, `._*`) é descartado em silêncio. As chaves de imagem ganham o prefixo do arquivo para dois `.apkg` no mesmo zip não colidirem |
 
 Regras da importação de baralhos inteiros (Anki e `.json`):
 - Os cards entram como **novos**. O progresso do app de origem não é trazido (o agendamento do Anki não mapeia direto no nosso estado FSRS).
@@ -192,10 +196,11 @@ Detalhes de implementação (`aplicarEscudo` em `goals/index.ts`): o escudo cobr
 
 Navegação: Início · Estudar · Baralhos · Evolução · Ajustes (barra lateral no desktop, compacta no tablet, barra inferior no celular).
 
-1. **Início** — anel da meta, cards para revisar hoje com estimativa de tempo, ofensiva com a semana, disciplina 30 dias, escudo, baralhos com pendências, carga dos próximos 7 dias. Lembrete de prova editável (post-it no canto).
+1. **Início** — recadinho motivacional (quando `public/recado.json` tem texto), anel da meta, cards para revisar hoje com estimativa de tempo, ofensiva com a semana, disciplina 30 dias, escudo, baralhos com pendências, carga dos próximos 7 dias. Lembrete de prova editável (post-it no canto).
 2. **Estudar** → **Sessão** → **Resultado** — frente → virar → avaliar; atalhos 1-4 e espaço; carimbo animado de feedback; resultado com retenção, tempo e distribuição das notas.
-3. **Baralhos** → **Baralho** → **Criar/editar card** — criar, editar (nome, assuntos, cor), exportar, arquivar e excluir baralho; busca; lista sem teto ("Mostrar mais" de 300 em 300); clicar num card abre a edição (salvar, excluir, suspender).
-   - Editor de card: imagens na frente e no verso (botão, ou colar com Ctrl+V), pré-visualização, "+ novo" baralho sem sair do editor, Ctrl+Enter salva e já abre o próximo. Um lado pode ser só imagem.
+3. **Baralhos** → **Baralho** → **Criar/editar card** — no topo do baralho, botões visíveis para editar (nome, assuntos, cor), exportar, arquivar e apagar; busca; lista sem teto ("Mostrar mais" de 300 em 300); cada card tem "Editar" e "Apagar" (com confirmação) na própria linha, e clicar na linha também abre a edição.
+   - Editor de card: imagens na frente e no verso (botão, ou colar com Ctrl+V), pré-visualização, "+ novo" baralho sem sair do editor, Ctrl+Enter salva e já abre o próximo. Um lado pode ser só imagem. No celular: "tirar foto" abre a câmera traseira direto e "da galeria" permite várias fotos; as dicas de teclado somem.
+   - Ajustes: as metas mudam pelos botões − / + ou digitando o número (vale ao sair do campo ou com Enter; fora do limite é ajustado para o mínimo/máximo).
    - Na sessão, as imagens aparecem abaixo da pergunta e da resposta; clicar amplia, Esc fecha.
 4. **Importar** — PDF, Anki, CSV/TXT, `.json` do app ou texto colado (ver "Importação").
 5. **Evolução** — painel de longo prazo (ver abaixo). Só é calculado com a tela aberta.

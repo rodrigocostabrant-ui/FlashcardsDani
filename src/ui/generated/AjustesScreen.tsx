@@ -73,9 +73,7 @@ export function AjustesScreen({ v }: { v: VM }) {
                   <button className="dh8" onClick={t.dec} style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none", background: "#F6EFE0", fontSize: "18px", cursor: "pointer" }}>
                     −
                   </button>
-                  <span style={{ minWidth: "44px", textAlign: "center", fontFamily: "'IBM Plex Mono',monospace", fontSize: "15px" }}>
-                    {t.v}
-                  </span>
+                  <input className="dh25" type="number" inputMode="numeric" key={t.v} defaultValue={t.v} onBlur={t.set} onKeyDown={t.key} title="Toque para digitar" style={{ width: "64px", height: "38px", border: "none", borderRadius: "10px", background: "transparent", textAlign: "center", fontFamily: "'IBM Plex Mono',monospace", fontSize: "15px", outline: "none", MozAppearance: "textfield" }} />
                   <button className="dh15" onClick={t.inc} style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none", background: "#F6EFE0", fontSize: "18px", cursor: "pointer" }}>
                     +
                   </button>
@@ -123,7 +121,7 @@ export function AjustesScreen({ v }: { v: VM }) {
             </span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            <button className="dh25" onClick={v.exportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#4A4034", color: "#FDFBF5", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+            <button className="dh26" onClick={v.exportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#4A4034", color: "#FDFBF5", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
               Exportar dados
             </button>
             <button className="dh1" onClick={v.openImportBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
@@ -156,7 +154,7 @@ export function AjustesScreen({ v }: { v: VM }) {
                         {" cards"}
                       </span>
                     </div>
-                    <button className="dh23" onClick={d.remove} style={{ height: "36px", padding: "0 14px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "13px", color: "#A3303F", cursor: "pointer" }}>
+                    <button className="dh20" onClick={d.remove} style={{ height: "36px", padding: "0 14px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "13px", color: "#A3303F", cursor: "pointer" }}>
                       Excluir
                     </button>
                     <button className="dh15" onClick={d.restore} style={{ height: "36px", padding: "0 16px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontWeight: "700", fontSize: "13px", cursor: "pointer" }}>

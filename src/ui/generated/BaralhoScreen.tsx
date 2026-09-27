@@ -20,15 +20,18 @@ export function BaralhoScreen({ v }: { v: VM }) {
             {"último estudo: "}
             {v.dk.ultimo}
           </span>
-          <div style={{ display: "flex", gap: "14px", marginTop: "4px" }}>
-            <button onClick={v.editDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
-              editar
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+            <button className="dh19" onClick={v.editDeck} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1px solid rgba(74,64,52,.18)", background: "rgba(253,251,245,.75)", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
+              ✎ Editar baralho
             </button>
-            <button onClick={v.exportDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
-              exportar
+            <button className="dh19" onClick={v.exportDeck} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1px solid rgba(74,64,52,.18)", background: "rgba(253,251,245,.75)", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
+              Exportar
             </button>
-            <button onClick={v.archiveDeck} style={{ border: "none", background: "none", padding: "0", cursor: "pointer", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: v.dk.ink, textDecoration: "underline" }}>
-              arquivar
+            <button className="dh19" onClick={v.archiveDeck} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1px solid rgba(74,64,52,.18)", background: "rgba(253,251,245,.75)", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
+              Arquivar
+            </button>
+            <button className="dh20" onClick={v.deleteDeckHere} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1px solid rgba(163,48,63,.3)", background: "rgba(253,251,245,.75)", fontSize: "13px", fontWeight: "600", color: "#A3303F", cursor: "pointer" }}>
+              Apagar baralho
             </button>
           </div>
         </div>
@@ -113,7 +116,7 @@ export function BaralhoScreen({ v }: { v: VM }) {
             </div>
             {v.dkCards.map((c, i_c) => (
               <Fragment key={i_c}>
-                <div className="dh20" onClick={c.edit} title="Editar card" style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", alignItems: "baseline", padding: "14px 4px", borderTop: "1px solid #E3D9C4", cursor: "pointer", borderRadius: "4px" }}>
+                <div className="dh21" onClick={c.edit} title="Editar card" style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", alignItems: "baseline", padding: "14px 4px", borderTop: "1px solid #E3D9C4", cursor: "pointer", borderRadius: "4px" }}>
                   <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68", width: "26px" }}>
                     {c.n}
                   </span>
@@ -136,6 +139,12 @@ export function BaralhoScreen({ v }: { v: VM }) {
                     <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#8A7C68", minWidth: "72px", textAlign: "right" }}>
                       {c.next}
                     </span>
+                    <button className="dh8" onClick={c.edit} title="Editar card" style={{ height: "30px", padding: "0 12px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "#FDFBF5", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
+                      ✎ Editar
+                    </button>
+                    <button className="dh20" onClick={c.del} title="Apagar card" style={{ height: "30px", padding: "0 12px", borderRadius: "999px", border: "1px solid transparent", background: "transparent", fontSize: "12px", fontWeight: "600", color: "#A3303F", cursor: "pointer" }}>
+                      Apagar
+                    </button>
                   </span>
                 </div>
               </Fragment>

@@ -22,9 +22,15 @@ export async function prepareImage(file: Blob): Promise<Blob> {
   canvas.height = Math.round(bmp.height * scale);
   canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
   bmp.close();
-  const out = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/webp', 0.86));
+  const encode = (type: string, q: number) => new Promise<Blob | null>((r) => canvas.toBlob(r, type, q));
+  let out = await encode('image/webp', 0.86);
+  // Safari antigo não gera WebP e devolve PNG (maior que a foto original); aí vai de JPEG.
+  if (!out || out.type !== 'image/webp') out = await encode('image/jpeg', 0.85);
   return out && out.size < file.size ? out : file;
 }
+
+/** Tela de toque (celular/tablet): mostra o botão de câmera. */
+export const temCamera = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 
 export function imagesFromClipboard(e: ClipboardEvent | React.ClipboardEvent): File[] {
   return [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith('image/'));

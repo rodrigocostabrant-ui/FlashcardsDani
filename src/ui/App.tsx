@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
-import { ensureSetup, gcMedia, runShield } from '../db/repo';
-import { db } from '../db/schema';
+import { ensureSetup, gcMedia, runShield, updateConfig } from '../db/repo';
+import { db, type Recado } from '../db/schema';
 import { dayKey, parseDayKey } from '../lib/dates';
 import { DIAS_SEMANA, shortDate } from '../lib/format';
 import { View } from './generated/View';
@@ -11,6 +11,25 @@ import { useApp } from './vm';
 type Boot = 'loading' | 'ready' | 'blocked';
 
 const shieldMsg = (k: string) => `Escudo usado: ${DIAS_SEMANA[parseDayKey(k).getDay()]}, ${shortDate(k)}, ficou protegido.`;
+
+/**
+ * Busca o recadinho em public/recado.json (editável pelo GitHub) e guarda na config,
+ * para continuar aparecendo sem internet. Texto vazio esconde o recado.
+ */
+async function atualizarRecado() {
+  try {
+    const r = await fetch(`${import.meta.env.BASE_URL}recado.json`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const j: unknown = await r.json();
+    const o = typeof j === 'object' && j !== null ? (j as Record<string, unknown>) : {};
+    const texto = typeof o.texto === 'string' ? o.texto.trim() : '';
+    const recado: Recado | null = texto ? { texto, assinatura: typeof o.assinatura === 'string' ? o.assinatura.trim() : '' } : null;
+    const atual = (await db.config.get('cfg'))?.recado ?? null;
+    if (JSON.stringify(atual) !== JSON.stringify(recado)) await updateConfig(db, { recado }, Date.now());
+  } catch {
+    // Sem internet ou arquivo inválido: continua valendo o último recado guardado.
+  }
+}
 
 export function App() {
   const [boot, setBoot] = useState<Boot>('loading');
@@ -29,6 +48,7 @@ export function App() {
         if (used) setAviso(shieldMsg(used));
         setBoot('ready');
         void gcMedia(db, Date.now());
+        void atualizarRecado();
       } catch (e) {
         console.error(e);
         setBoot('blocked');
@@ -40,8 +60,14 @@ export function App() {
       if (d === lastDay) return;
       lastDay = d;
       void runShield(db, Date.now()).then((used) => used && setAviso(shieldMsg(used)));
+      void atualizarRecado();
     }, 60_000);
-    return () => clearInterval(t);
+    const onOnline = () => void atualizarRecado();
+    window.addEventListener('online', onOnline);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('online', onOnline);
+    };
   }, []);
 
   const data = useLiveQuery(async (): Promise<Snapshot | undefined> => {

@@ -195,6 +195,8 @@ export interface BaralhoImportado {
   nome: string;
   descricao?: string;
   cor?: number;
+  /** Só para a tela de resumo da importação (ex.: "confiança baixa"); não é gravado. */
+  aviso?: string;
   cards: { frente: string; verso: string; tags?: string[]; imgsFrente: string[]; imgsVerso: string[] }[];
 }
 

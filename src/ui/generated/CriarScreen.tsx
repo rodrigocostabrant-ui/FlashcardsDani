@@ -43,8 +43,13 @@ export function CriarScreen({ v }: { v: VM }) {
                     </div>
                   </Fragment>
                 ))}
+                {!!(v.ccCamera) && (
+                    <button onClick={v.camQ} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px solid #D98CAE", background: "#FAEBF0", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#A8436E", cursor: "pointer" }}>
+                      📷 tirar foto
+                    </button>
+                )}
                 <button className="dh2" onClick={v.addImgQ} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px dashed #D98CAE", background: "transparent", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#A8436E", cursor: "pointer" }}>
-                  + imagem
+                  {v.ccGaleriaL}
                 </button>
                 <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#B5A88F" }}>
                   {v.ccPasteHint}
@@ -72,8 +77,13 @@ export function CriarScreen({ v }: { v: VM }) {
                     </div>
                   </Fragment>
                 ))}
-                <button className="dh21" onClick={v.addImgA} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px dashed #7FA886", background: "transparent", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#4F7358", cursor: "pointer" }}>
-                  + imagem
+                {!!(v.ccCamera) && (
+                    <button onClick={v.camA} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px solid #7FA886", background: "#EAF1E6", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#4F7358", cursor: "pointer" }}>
+                      📷 tirar foto
+                    </button>
+                )}
+                <button className="dh22" onClick={v.addImgA} style={{ height: "34px", padding: "0 14px", borderRadius: "999px", border: "1.5px dashed #7FA886", background: "transparent", fontFamily: "'IBM Plex Mono',monospace", fontSize: "11px", color: "#4F7358", cursor: "pointer" }}>
+                  {v.ccGaleriaL}
                 </button>
                 <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", color: "#B5A88F" }}>
                   {v.ccPasteHint}

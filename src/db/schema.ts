@@ -71,6 +71,13 @@ export interface Config {
   inicio: string;
   ultimoBackup: number | null;
   lembrete: Lembrete | null;
+  /** Último recadinho baixado de /recado.json, guardado para aparecer também sem internet. */
+  recado?: Recado | null;
+}
+
+export interface Recado {
+  texto: string;
+  assinatura: string;
 }
 
 export class FlashcardsDB extends Dexie {

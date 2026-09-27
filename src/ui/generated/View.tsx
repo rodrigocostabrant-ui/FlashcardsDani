@@ -196,7 +196,7 @@ export function View({ v }: { v: VM }) {
                 </div>
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
                   {!!(v.nbEditing) && (
-                      <button className="dh23" onClick={v.deleteDeckAsk} style={{ height: "48px", padding: "0 16px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "14px", color: "#A3303F", cursor: "pointer", marginRight: "auto" }}>
+                      <button className="dh20" onClick={v.deleteDeckAsk} style={{ height: "48px", padding: "0 16px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "14px", color: "#A3303F", cursor: "pointer", marginRight: "auto" }}>
                         Excluir baralho
                       </button>
                   )}
@@ -229,7 +229,7 @@ export function View({ v }: { v: VM }) {
                   <button onClick={v.closeModal} style={{ height: "48px", padding: "0 20px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "transparent", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
                     Cancelar
                   </button>
-                  <button className="dh22" onClick={v.confirmBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+                  <button className="dh23" onClick={v.confirmBackup} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
                     Escolher arquivo e substituir
                   </button>
                 </div>
@@ -256,7 +256,7 @@ export function View({ v }: { v: VM }) {
                   <button onClick={v.closeModal} style={{ height: "48px", padding: "0 20px", borderRadius: "999px", border: "1px solid #E3D9C4", background: "transparent", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>
                     Cancelar
                   </button>
-                  <button className="dh22" onClick={v.confirmAction} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+                  <button className="dh23" onClick={v.confirmAction} style={{ height: "48px", padding: "0 22px", borderRadius: "999px", border: "none", background: "#A3303F", color: "#FFF8F3", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
                     {v.confBtn}
                   </button>
                 </div>
@@ -287,7 +287,7 @@ export function View({ v }: { v: VM }) {
                 )}
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
                   {!!(v.hasLembrete) && (
-                      <button className="dh23" onClick={v.removeLembrete} style={{ height: "48px", padding: "0 18px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "14px", color: "#A3303F", cursor: "pointer", marginRight: "auto" }}>
+                      <button className="dh20" onClick={v.removeLembrete} style={{ height: "48px", padding: "0 18px", borderRadius: "999px", border: "none", background: "transparent", fontWeight: "600", fontSize: "14px", color: "#A3303F", cursor: "pointer", marginRight: "auto" }}>
                         Remover
                       </button>
                   )}

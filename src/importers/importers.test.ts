@@ -6,6 +6,7 @@ import { AnkiError, noteToCards, parseApkg, parseMediaEntries } from './anki';
 import { DeckFileInvalido, parseDeckFile } from './deckFile';
 import { htmlToText } from './html';
 import { parseDelimited, textToPairs } from './text';
+import { ZipInvalido, lerZip } from './zip';
 
 let SQL: SqlJsStatic;
 beforeAll(async () => {
@@ -156,6 +157,33 @@ describe('parseApkg', () => {
     const entry = [...name, 0xf8, 0x0f, 7]; // campo 255, varint 7
     const map = parseMediaEntries(new Uint8Array([(1 << 3) | 2, entry.length, ...entry]));
     expect([...map]).toEqual([['7', 'a.png']]);
+  });
+});
+
+describe('lerZip', () => {
+  it('separa os arquivos suportados, ignora lixo do macOS e conta os desconhecidos', async () => {
+    const zip = new JSZip();
+    zip.file('Resumos/Farmaco.csv', 'a;b\nc;d');
+    zip.file('Resumos/anotacoes.txt', 'P: x\nR: y');
+    zip.file('baralho.json', '{}');
+    zip.file('Resumos/Aula 3.PDF', new Uint8Array([1]));
+    zip.file('foto.jpg', new Uint8Array([1]));
+    zip.file('__MACOSX/Resumos/._Farmaco.csv', 'lixo');
+    zip.file('.DS_Store', 'lixo');
+    zip.folder('vazia');
+    const r = await lerZip(await zip.generateAsync({ type: 'uint8array' }));
+    expect(r.arquivos.map((a) => [a.nome, a.tipo])).toEqual([
+      ['baralho.json', 'json'],
+      ['anotacoes.txt', 'texto'],
+      ['Aula 3.PDF', 'pdf'],
+      ['Farmaco.csv', 'texto'],
+    ]);
+    expect(r.ignorados).toEqual(['foto.jpg']);
+    expect(await r.arquivos[3].file.text()).toBe('a;b\nc;d');
+  });
+
+  it('recusa arquivo que não é zip', async () => {
+    await expect(lerZip(new Uint8Array([1, 2, 3]))).rejects.toThrow(ZipInvalido);
   });
 });
 

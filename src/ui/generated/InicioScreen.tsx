@@ -61,6 +61,28 @@ export function InicioScreen({ v }: { v: VM }) {
             </button>
         )}
       </div>
+      {!!(v.hasRecado) && (
+          <div style={{ position: "relative", display: "flex", gap: "18px", alignItems: "flex-start", padding: "clamp(20px,3.4cqi,30px) clamp(20px,3.6cqi,34px)", borderRadius: "6px 22px 22px 22px", backgroundColor: "#FDFBF5", backgroundImage: "repeating-linear-gradient(to bottom,transparent 0 31px,rgba(217,140,174,.16) 31px 32px)", border: "1px solid #E3D9C4", boxShadow: "0 8px 22px -12px rgba(150,130,100,.35)", animation: "fadeUp .45s ease both" }}>
+            <div style={{ position: "absolute", top: "-10px", left: "28px", width: "84px", height: "20px", background: "rgba(244,217,227,.92)", transform: "rotate(-3deg)", backgroundImage: "radial-gradient(rgba(201,72,91,.2) 1px,transparent 1.5px)", backgroundSize: "7px 7px" }} />
+            <svg width="34" height="34" viewBox="0 0 24 24" style={{ flex: "none", marginTop: "4px", animation: "floaty 6s ease-in-out infinite" }}>
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="#F4D9E3" stroke="#C9485B" strokeWidth="1.6" strokeLinejoin="round" />
+            </svg>
+            <div style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10.5px", letterSpacing: ".12em", textTransform: "uppercase", color: "#A8436E" }}>
+                um recadinho pra você
+              </span>
+              <p style={{ margin: "0", fontFamily: "'Fraunces',serif", fontStyle: "italic", fontSize: "clamp(19px,2.8cqi,24px)", lineHeight: "1.4", color: "#4A4034", whiteSpace: "pre-line", textWrap: "pretty" }}>
+                {v.recadoTexto}
+              </p>
+              {!!(v.recadoAssinatura) && (
+                  <span style={{ alignSelf: "flex-end", fontFamily: "'Fraunces',serif", fontSize: "17px", color: "#A8436E" }}>
+                    {"— "}
+                    {v.recadoAssinatura}
+                  </span>
+              )}
+            </div>
+          </div>
+      )}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "18px" }}>
         <div style={{ flex: "2 1 420px", minWidth: "0", position: "relative", overflow: "hidden", padding: "clamp(22px,3.6cqi,36px)", borderRadius: "26px", backgroundColor: "#F3E3B5", backgroundImage: "repeating-linear-gradient(to bottom,transparent 0 27px,rgba(201,72,91,.10) 27px 28px)", display: "flex", flexDirection: "column", gap: "18px" }}>
           <div style={{ position: "absolute", left: "clamp(14px,2.4cqi,24px)", top: "0", bottom: "0", width: "1px", background: "rgba(201,72,91,.25)" }} />
